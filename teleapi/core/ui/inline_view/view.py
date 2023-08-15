@@ -1,0 +1,80 @@
+from abc import ABCMeta
+from collections import defaultdict
+from teleapi.core.utils.collectors import CollectorMeta, collect_subclasses
+from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
+from typing import List, Type
+from .button import BaseInlineViewButton
+from teleapi.core.utils.collections import find_in_list
+from teleapi.types.callback_query import CallbackQuery
+from teleapi.core.utils.rand import generate_random_string
+from ...utils.syntax import default
+
+
+class InlineViewMeta(CollectorMeta, ABCMeta):
+    _collector = {
+        'func': collect_subclasses,
+        'attributes': {
+            BaseInlineViewButton: '__dynamic_buttons__'
+        }
+    }
+
+
+class BaseInlineView(metaclass=InlineViewMeta):
+    CALLBACK_DATA_FORMAT: str = "[{}={}]"
+    __created_views__: List['BaseInlineView'] = []
+
+    # Dynamic generated properties, that collects buttons(BaseInlineViewButton)
+    __dynamic_buttons__: List[Type['BaseInlineViewButton']]
+
+    __view_buttons__: List[Type['BaseInlineViewButton']] = []
+
+    def __new__(cls, *args, **kwargs) -> 'BaseInlineView':
+        instance = super().__new__(cls)
+        BaseInlineView.__created_views__.append(instance)
+
+        return instance
+
+    def __init__(self) -> None:
+        self.id = generate_random_string(5)
+
+        self._buttons = [
+            button_cls(self) for button_cls in (self.__class__.__dynamic_buttons__ + self.__class__.__view_buttons__)
+        ]
+
+        self.message = None
+
+    async def register_button(self, button: BaseInlineViewButton) -> None:
+        if not isinstance(button, BaseInlineViewButton):
+            raise TypeError("button must be instance of BaseInlineViewButton")
+
+        self._buttons.append(button)
+
+    def unregister_button(self, button: BaseInlineViewButton) -> None:
+        self._buttons.remove(button)
+
+    def get_sorted_buttons(self) -> List[List[BaseInlineViewButton]]:
+        keyboard = defaultdict(list)
+
+        for button in self._buttons:
+            keyboard[button.row].insert(button.place, button)
+
+        return [keyboard[key] for key in sorted(keyboard.keys())]
+
+    async def make_markup(self) -> InlineKeyboardMarkup:
+        for button in self._buttons:
+            button.callback_data = self.__class__.CALLBACK_DATA_FORMAT.format(self.id, button.id) + (default(f"_{button.callback_data}", ""))
+
+        return InlineKeyboardMarkup(inline_keyboard=self.get_sorted_buttons())
+
+    async def on_click(self, button_id: str, callback_query: CallbackQuery) -> None:
+        if self.message is None:
+            self.message = callback_query.message
+
+        button = find_in_list(self._buttons, lambda x: x.id == button_id)
+
+        if button is not None:
+            await button.on_click(callback_query)
+
+
+class View(BaseInlineView):
+    pass
