@@ -24,8 +24,8 @@ class SizedValidator(Validator):
             return None
 
         if self.min_length is not None and len(value) < self.min_length:
-            raise ValidationError(f'Length of validator {self} must be greater than {self.min_length}')
+            raise ValidationError(f'Value length for validator {self} must be greater than {self.min_length}')
         elif self.max_length is not None and len(value) > self.max_length:
-            raise ValidationError(f'Length of validator {self} must be less than {self.min_length}')
+            raise ValidationError(f'Value length for validator {self} must be less than {self.min_length}')
 
         return value

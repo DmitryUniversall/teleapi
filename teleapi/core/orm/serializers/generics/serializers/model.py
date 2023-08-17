@@ -67,7 +67,11 @@ class ModelSerializerMeta(SerializerMeta):  # TODO: Переписать
                     f"Field {model_field} was declared in model, but it is not supported py ModelSerializer. Please, declare it manually")
                 continue
 
-            field = serializer_field()  # TODO: Придумать, как нормально копировать поля
+            if not isinstance(serializer_field, type) and callable(serializer_field):
+                field = serializer_field(model_field, serializer_field)
+            else:
+                field = serializer_field()
+
             field.__owner__ = cls
             field.__attribute_name__ = model_field.__attribute_name__
 
