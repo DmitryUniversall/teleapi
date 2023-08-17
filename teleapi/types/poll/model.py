@@ -10,7 +10,7 @@ from datetime import datetime
 class PollModel(Model):
     id: str = StringModelField()
     question: str = StringModelField(max_length=300)
-    options: List[PollOption] = ListModelField(RelatedModelField(PollOption))
+    options: List[PollOption] = ListModelField(RelatedModelField(PollOption), min_length=2, max_length=10)
     total_voter_count: int = IntegerModelField()
     is_closed: bool = BooleanModelField(default=False)
     is_anonymous: bool = BooleanModelField(default=False)

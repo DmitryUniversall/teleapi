@@ -7,8 +7,8 @@ from importlib import import_module
 
 
 class RelatedSerializerField(Validator, SerializerField):
-    def __init__(self, serializable: Union[Serializable, str], *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, serializable: Union[Serializable, str], **kwargs) -> None:
+        super().__init__(**kwargs)
         self._serializable = serializable
 
     @property

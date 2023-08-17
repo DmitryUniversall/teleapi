@@ -5,8 +5,8 @@ from teleapi.core.orm.validators.validator import BaseValidator
 
 
 class BaseSerializerField(BaseValidator, Field, Serializable, ABC):
-    def __init__(self, read_name: str = None, read_only: bool = False, write_only: bool = False, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, read_name: str = None, read_only: bool = False, write_only: bool = False, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.read_name = read_name
         self.read_only = read_only
         self.write_only = write_only

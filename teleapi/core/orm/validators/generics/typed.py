@@ -5,8 +5,8 @@ from typing import Type, Any, Union, Tuple
 
 
 class TypedValidator(Validator):
-    def __init__(self, type_: Union[type, str, Tuple[Union[type, str,], ...]], *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, type_: Union[type, str, Tuple[Union[type, str,], ...]], **kwargs) -> None:
+        super().__init__(**kwargs)
         self.__type = type_
 
     def _get_type(self, t) -> type:

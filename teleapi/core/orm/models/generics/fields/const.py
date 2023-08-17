@@ -4,8 +4,8 @@ from teleapi.core.orm.models.field import ModelField
 
 
 class ConstantModelField(ModelField):
-    def __init__(self, constant: Any, raise_exception: bool = False, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, constant: Any, raise_exception: bool = False, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.constant = constant
         self.raise_exception = raise_exception
 
