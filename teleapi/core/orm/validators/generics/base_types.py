@@ -43,7 +43,7 @@ class StringValidator(TypedValidator):
 
         if min_length is not None and (not isinstance(min_length, int) or min_length <= 0):
             raise TypeError('min_length must be a positive integer')
-        elif max_length is not None and (not isinstance(min_length, int) or min_length <= 0):
+        elif max_length is not None and (not isinstance(max_length, int) or max_length <= 0):
             raise TypeError('max_length must be a positive integer')
         elif (min_length is not None and max_length is not None) and max_length < min_length:
             raise ValueError('min_length must be less then max_length')

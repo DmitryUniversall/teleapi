@@ -5,6 +5,6 @@ from teleapi.types.user import User
 
 
 class PollAnswerModel(Model):
-    id: str = StringModelField()
+    poll_id: str = StringModelField()
     user: User = RelatedModelField(User)
     option_ids: List[int] = ListModelField(IntegerModelField())
