@@ -202,7 +202,7 @@ class Executor(BaseExecutor):
             await self.error_manager.process_error(error, update)
 
     @BaseExecutor.executor_event(event_type=UpdateEvent.ON_CALLBACK_QUERY)
-    async def view_check_callback_query_event(self, callback_query: CallbackQuery, update: Update, **_) -> None:
+    async def view_check_event(self, callback_query: CallbackQuery, update: Update, **_) -> None:
         if not callback_query.data:
             return
 
@@ -216,7 +216,6 @@ class Executor(BaseExecutor):
 
         if view is None:
             logger.debug(f"Skipping view_check_callback_query_event (UpdateEvent.ON_CALLBACK_QUERY) because view with id '{view_id}' was not found")
-            await callback_query.answer("Сообщение устарело")
             return
 
         try:

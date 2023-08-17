@@ -5,7 +5,7 @@ from .exceptions import ValidationError
 
 
 class BaseValidator(Validateable, ABC):
-    def __init__(self, is_required: bool = False, default: Any = None) -> None:
+    def __init__(self, is_required: bool = True, default: Any = None) -> None:
         self.is_required = is_required
         self.default = default
 

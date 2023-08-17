@@ -9,15 +9,15 @@ from datetime import datetime
 
 class PollModel(Model):
     id: str = StringModelField()
+    type_: str = StringModelField()
+    total_voter_count: int = IntegerModelField()
     question: str = StringModelField(max_length=300)
     options: List[PollOption] = ListModelField(RelatedModelField(PollOption), min_length=2, max_length=10)
-    total_voter_count: int = IntegerModelField()
     is_closed: bool = BooleanModelField(default=False)
     is_anonymous: bool = BooleanModelField(default=False)
-    type_: str = StringModelField()
     allows_multiple_answers: bool = BooleanModelField(default=False)
     correct_option_id: Optional[int] = IntegerModelField(is_required=False)
     explanation: Optional[str] = StringModelField(is_required=False, max_length=200)
-    explanation_entities: List[MessageEntity] = ListModelField(RelatedModelField(MessageEntity))
+    explanation_entities: List[MessageEntity] = ListModelField(RelatedModelField(MessageEntity), is_required=False)
     open_period: Optional[int] = IntegerModelField(is_required=False)
     close_date: Optional[datetime] = UnixTimestampModelField(is_required=False)

@@ -156,7 +156,6 @@ class Message(MessageModel):
                          is_closed: bool = None,
                          disable_notification: bool = None,
                          protect_content: bool = None,
-                         reply_to_message: Union[int, 'Message'] = None,
                          allow_sending_without_reply: bool = None,
                          reply_markup: Union[
                              'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,

@@ -7,6 +7,8 @@ class UpdateEvent(Enum):
     ON_CALLBACK_QUERY = "on_callback_query"
     ON_CHAT_MEMBER_UPDATED = "on_chat_member_updated"
     ON_BOT_CHAT_MEMBER_UPDATED = "on_bot_chat_member_updated"
+    ON_POLL_STATUS_UPDATED = "on_poll_status_updated"
+    ON_POLL_ANSWER = "on_poll_answer"
 
 
 class AllowedUpdates(Enum):

@@ -14,6 +14,7 @@ from ..audio.serializer import AudioSerializer
 from ..contact import ContactSerializer
 from ..document import DocumentSerializer
 from ..photo_size.serializer import PhotoSizeSerializer
+from ..poll import PollSerializer
 from ..video.serializer import VideoSerializer
 from ..video_note import VideoNoteSerializer
 from ..voice.serializer import VoiceSerializer
@@ -31,8 +32,8 @@ class MessageSerializer(ModelSerializer):
     forward_from_chat = RelatedSerializerField(ChatSerializer(), is_required=False)
     reply_to_message = RelatedSerializerField('MessageSerializer', is_required=False)
     pinned_message = RelatedSerializerField('MessageSerializer', is_required=False)
-    entities = ListSerializerField(RelatedSerializerField(MessageEntitySerializer()))
-    caption_entities = ListSerializerField(RelatedSerializerField(MessageEntitySerializer()))
+    entities = ListSerializerField(RelatedSerializerField(MessageEntitySerializer()), is_required=False)
+    caption_entities = ListSerializerField(RelatedSerializerField(MessageEntitySerializer()), is_required=False)
     photo = ListSerializerField(RelatedSerializerField(PhotoSizeSerializer()), is_required=False)
     animation = RelatedSerializerField(AnimationSerializer(), is_required=False)
     audio = RelatedSerializerField(AudioSerializer(), is_required=False)
@@ -42,8 +43,9 @@ class MessageSerializer(ModelSerializer):
     voice = RelatedSerializerField(VoiceSerializer(), is_required=False)
     new_chat_photo = ListSerializerField(RelatedSerializerField(PhotoSizeSerializer()), is_required=False)
     new_chat_members = ListSerializerField(RelatedSerializerField(UserSerializer()), is_required=False)
-    left_chat_member = RelatedSerializerField(UserSerializer())
-    contact = RelatedSerializerField(ContactSerializer())
+    left_chat_member = RelatedSerializerField(UserSerializer(), is_required=False)
+    contact = RelatedSerializerField(ContactSerializer(), is_required=False)
+    poll = RelatedSerializerField(PollSerializer(), is_required=False)
 
     class Meta:
         model = Message

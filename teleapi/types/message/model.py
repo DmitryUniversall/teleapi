@@ -19,6 +19,7 @@ from datetime import datetime
 
 from ..message_entity import MessageEntity
 from ..photo_size.obj import PhotoSize
+from ..poll import Poll
 from ..video.obj import Video
 from ..video_note import VideoNote
 from ..voice.obj import Voice
@@ -179,7 +180,7 @@ class MessageModel(Model):
     video_note: Optional[VideoNote] = RelatedModelField(VideoNote, is_required=False)
     voice: Optional[Voice] = RelatedModelField(Voice, is_required=False)
     contact: Optional[Contact] = RelatedModelField(Contact, is_required=False)
-    # poll: Optional[Poll] = RelatedModelField(Poll, is_required=False)
+    poll: Optional[Poll] = RelatedModelField(Poll, is_required=False)
 
     # sticker: Optional[Sticker] = RelatedModelField(Sticker, is_required=False) TODO
     # dice: Optional[Dice] = RelatedModelField(Dice, is_required=False)

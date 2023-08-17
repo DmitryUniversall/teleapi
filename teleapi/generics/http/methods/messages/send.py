@@ -870,6 +870,7 @@ async def send_poll(chat_id: Union[int, str],
     reply_markup = await get_converted_reply_markup(reply_markup, view)
     explanation_entities = MessageEntitySerializer().serialize(obj=explanation_entities, many=True) if explanation_entities is not None else None
     close_date = close_date.timestamp() if close_date is not None else None
+    type_ = type_.value if type_ is not None else None
     request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view')))
 
     from teleapi.types.message.serializer import MessageSerializer
