@@ -313,7 +313,7 @@ class Chat(ChatModel):
 
     async def send_video(self,
                          video: Union[bytes, str],
-                         thumbnail: Union[bytes, str],
+                         thumbnail: Union[bytes, str] = None,
                          message_thread_id: int = None,
                          caption: str = None,
                          duration: int = None,

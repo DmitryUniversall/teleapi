@@ -3,6 +3,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List
 from typing import Union
 
+from aiohttp import FormData
+
+from teleapi.core.exceptions.generics import FileTooLargeError
 from teleapi.core.http.request.api_method import APIMethod
 from teleapi.core.http.request.api_request import method_request
 from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
@@ -22,41 +25,32 @@ if TYPE_CHECKING:
     from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
 
 
-async def send_message(chat_id: Union[int, str],
-                       text: str,
-                       reply_to_message_id: int = None,
-                       message_thread_id: int = None,
-                       parse_mode: ParseMode = ParseMode.NONE,
-                       disable_web_page_preview: bool = None,
-                       disable_notification: bool = None,
-                       protect_content: bool = None,
-                       allow_sending_without_reply: bool = None,
-                       entities: List['MessageEntity'] = None,
-                       reply_markup: Union[
-                           'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                       view: 'BaseInlineView' = None
-                       ) -> 'Message':
+async def send(method: APIMethod,
+               chat_id: int,
+               message_thread_id: int = None,
+               disable_notification: bool = None,
+               protect_content: bool = None,
+               reply_to_message_id: int = None,
+               allow_sending_without_reply: bool = None,
+               reply_markup: Union[
+                   'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+               view: 'BaseInlineView' = None,
+               **kwargs
+               ) -> 'Message':
     """
-    Sends a text message to a specified chat
+    Sends the message of any type (text, photo, video...)
+
+    :param method: `ApiMethod`
+        Api method to send the message
 
     :param chat_id: `Union[int, str]`
         The unique identifier or username of the target chat.
-
-    :param text: `str`
-        The text of the message to be sent.
 
     :param reply_to_message_id: `int`
         (Optional) If the message is a reply, the ID of the original message.
 
     :param message_thread_id: `int`
         (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
-
-    :param parse_mode: `ParseMode`
-        (Optional) The mode for parsing entities in the message text.
-        Default is `ParseMode.NONE`.
-
-    :param disable_web_page_preview: `bool`
-        (Optional) Disable web page previews for links in the message.
 
     :param disable_notification: `bool`
         (Optional) Sends the message silently. Users will receive a notification with no sound.
@@ -70,11 +64,69 @@ async def send_message(chat_id: Union[int, str],
     :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
         (Optional) Additional interface for the message.
 
+    :param view: `'BaseInlineView'`
+        (Optional) Inline view to control message interface.
+
+    :param kwargs: `dict`
+        (Optional) Any other request parameters
+
+    :return: `Message`
+        The sent message.
+
+    :raises:
+        :raise: ApiRequestError or any of its subclasses if request sent to the Telegram Bot API failed
+        :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+    """
+    reply_markup = await get_converted_reply_markup(reply_markup, view)
+
+    data_form = None
+
+    try:
+        data_form = kwargs.pop('data_form')
+    except KeyError:
+        pass
+
+    request_data = make_data_form(clear_none_values(
+        {
+            **exclude_from_dict(locals(), 'view', 'kwargs', 'method', 'data_form'),
+            **kwargs
+        }
+    ), data_form=data_form)
+
+    from teleapi.types.message.serializer import MessageSerializer
+    response, data = await method_request("POST", method, data=request_data)
+    message = MessageSerializer().serialize(data=data['result'])
+
+    if view:
+        view.message = message
+
+    return message
+
+
+async def send_message(text: str,
+                       parse_mode: ParseMode = ParseMode.NONE,
+                       disable_web_page_preview: bool = None,
+                       entities: List['MessageEntity'] = None,
+                       **kwargs
+                       ) -> 'Message':
+    """
+    Sends a text message to a specified chat
+
+    :param text: `str`
+        The text of the message to be sent.
+
+    :param parse_mode: `ParseMode`
+        (Optional) The mode for parsing entities in the message text.
+        Default is `ParseMode.NONE`.
+
+    :param disable_web_page_preview: `bool`
+        (Optional) Disable web page previews for links in the message.
+
     :param entities: `List['MessageEntity']`
         (Optional) List of special entities that appear in the message text.
 
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control message interface.
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
 
     :return: `Message`
         The sent message.
@@ -85,48 +137,29 @@ async def send_message(chat_id: Union[int, str],
     """
 
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
     entities = MessageEntitySerializer().serialize(obj=entities, many=True) if entities is not None else None
-    request_data = clear_none_values(exclude_from_dict(locals(), 'view'))
 
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_MESSAGE, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    if view:
-        view.message = message
-
-    return message
+    return await send(
+        method=APIMethod.SEND_MESSAGE,
+        **exclude_from_dict(locals(), 'kwargs'),
+        **kwargs
+    )
 
 
-async def send_photo(chat_id: Union[int, str],
-                     photo: Union[bytes, str],
-                     message_thread_id: int = None,
+async def send_photo(photo: Union[bytes, str],
                      caption: str = None,
                      parse_mode: ParseMode = ParseMode.NONE,
                      caption_entities: List['MessageEntity'] = None,
                      has_spoiler: bool = None,
-                     disable_notification: bool = None,
-                     protect_content: bool = None,
-                     reply_to_message_id: int = None,
-                     allow_sending_without_reply: bool = None,
-                     reply_markup: Union[
-                         'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                     view: 'BaseInlineView' = None,
                      filename: str = None,
+                     **kwargs
                      ) -> 'Message':
     """
     Sends a photo to a specified chat
 
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
-
     :param photo: `Union[bytes, str]`
         The photo file to be sent. It can be provided as bytes, a file path (str), or the file_id of a photo file that
         already exists on the Telegram servers (str).
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param caption: `str`
         (Optional) A caption to accompany the photo.
@@ -141,26 +174,11 @@ async def send_photo(chat_id: Union[int, str],
     :param has_spoiler: `bool`
         (Optional) Mark the photo as containing spoilers.
 
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
-
-    :param protect_content: `bool`
-        (Optional)Protects the contents of the sent message from forwarding and saving
-
-    :param reply_to_message_id: `int`
-        (Optional) If the photo is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control message interface.
-
     :param filename: `str`
         (Optional) The filename to be used when sending the photo.
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
 
     :return: `Message`
         The sent message.
@@ -168,31 +186,30 @@ async def send_photo(chat_id: Union[int, str],
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API sent fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise FileTooLargeError: If specified photo is more than 10MB in size
     """
 
     if isinstance(photo, str) and os.path.exists(photo):
         filename, photo = get_file(photo)
 
+        if (len(photo) // 1024) // 1024 > 10:
+            raise FileTooLargeError(
+                f"Specified photo must be less than 10MB in size, got {(len(photo) // 1024) // 1024}kB")
+
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
-    request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view', 'filename', 'photo')))
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
+                                                           many=True) if caption_entities is not None else None
+    data_form = FormData()
+    data_form.add_field('photo', photo, filename=filename)
 
-    request_data.add_field('photo', photo, filename=filename)
-
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_PHOTO, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    if view:
-        view.message = message
-
-    return message
+    return await send(
+        method=APIMethod.SEND_PHOTO,
+        **exclude_from_dict(locals(), 'filename', 'kwargs', 'photo'),
+        **kwargs
+    )
 
 
-async def send_audio(chat_id: Union[int, str],
-                     audio: Union[bytes, str],
-                     message_thread_id: int = None,
+async def send_audio(audio: Union[bytes, str],
                      caption: str = None,
                      parse_mode: ParseMode = ParseMode.NONE,
                      caption_entities: List['MessageEntity'] = None,
@@ -200,27 +217,15 @@ async def send_audio(chat_id: Union[int, str],
                      performer: str = None,
                      title: str = None,
                      thumbnail: Union[bytes, str] = None,
-                     disable_notification: bool = None,
-                     protect_content: bool = None,
-                     reply_to_message_id: int = None,
-                     allow_sending_without_reply: bool = None,
-                     reply_markup: Union[
-                         'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                     view: 'BaseInlineView' = None,
-                     filename: str = None
+                     filename: str = None,
+                     **kwargs
                      ) -> 'Message':
     """
     Sends an audio file to a specified chat
 
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
-
     :param audio: `Union[bytes, str]`
         The audio file to be sent. It can be provided as bytes, a file path (str), or the file_id of an audio file that
         already exists on the Telegram servers.
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param caption: `str`
         (Optional) A caption to accompany the audio.
@@ -244,37 +249,24 @@ async def send_audio(chat_id: Union[int, str],
     :param thumbnail: `Union[bytes, str]`
         (Optional) Thumbnail of the audio, can be provided as bytes or a file path.
 
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
-
-    :param protect_content: `bool`
-        (Optional)Protects the contents of the sent message from forwarding and saving
-
-    :param reply_to_message_id: `int`
-        (Optional) If the audio is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control the message interface.
-
     :param filename: `str`
         (Optional) The filename to be used when sending the audio.
 
-    :return: The sent message.
-    :rtype: `Message`
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
-          The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320.
+          The thumbnail should be in JPEG format and less than 200 kB in size.
+          A thumbnail's width and height should not exceed 320.
     """
 
     if isinstance(audio, str) and os.path.exists(audio):
@@ -282,55 +274,41 @@ async def send_audio(chat_id: Union[int, str],
     if isinstance(thumbnail, str) and os.path.exists(thumbnail):
         _, thumbnail = get_file(thumbnail)
 
+        if len(thumbnail) // 1024 > 200:
+            raise FileTooLargeError(
+                f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
+
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
-    request_data = make_data_form(
-        clear_none_values(exclude_from_dict(locals(), 'view', 'audio', 'filename', 'thumbnail')))
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
+                                                           many=True) if caption_entities is not None else None
+    data_form = FormData()
 
     if thumbnail:
-        request_data.add_field('thumbnail', thumbnail)
-    request_data.add_field('audio', audio, filename=filename)
+        data_form.add_field('thumbnail', thumbnail)
+    data_form.add_field('audio', audio, filename=filename)
 
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_AUDIO, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    if view:
-        view.message = message
-
-    return message
+    return await send(
+        method=APIMethod.SEND_AUDIO,
+        **exclude_from_dict(locals(), 'filename', 'kwargs', 'audio', 'thumbnail'),
+        **kwargs
+    )
 
 
-async def send_document(chat_id: Union[int, str],
-                        document: Union[bytes, str],
-                        message_thread_id: int = None,
+async def send_document(document: Union[bytes, str],
                         caption: str = None,
                         parse_mode: ParseMode = ParseMode.NONE,
                         caption_entities: List['MessageEntity'] = None,
                         disable_content_type_detection: bool = None,
                         thumbnail: Union[bytes, str] = None,
-                        disable_notification: bool = None,
-                        protect_content: bool = None,
-                        reply_to_message_id: int = None,
-                        allow_sending_without_reply: bool = None,
-                        reply_markup: Union[
-                            'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                        view: 'BaseInlineView' = None,
-                        filename: str = None
+                        filename: str = None,
+                        **kwargs
                         ) -> 'Message':
     """
     Sends a document file to a specified chat.
 
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
-
     :param document: `Union[bytes, str]`
         The document file to be sent. It can be provided as bytes, a file path (str), or the file_id of a document file
         that already exists on the Telegram servers.
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param caption: `str`
         (Optional) A caption to accompany the document.
@@ -348,68 +326,59 @@ async def send_document(chat_id: Union[int, str],
     :param thumbnail: `Union[bytes, str]`
         (Optional) Thumbnail of the document, can be provided as bytes or a file path.
 
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
-
-    :param protect_content: `bool`
-        (Optional)Protects the contents of the sent message from forwarding and saving
-
-    :param reply_to_message_id: `int`
-        (Optional) If the document is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control the message interface.
-
     :param filename: `str`
         (Optional) The filename to be used when sending the document.
 
-    :return: The sent message object.
-    :rtype: `Message`
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise FileTooLargeError: If specified document is mode than 50MB in size
+        or thumbnail is more than 200kB in size
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
-          The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320.
+          The thumbnail should be in JPEG format and less than 200 kB in size.
+          A thumbnail's width and height should not exceed 320.
     """
 
     if isinstance(document, str) and os.path.exists(document):
         filename, document = get_file(document)
+
+        if (len(document) // 1024) // 1024 > 50:
+            raise FileTooLargeError(
+                f"Specified document must be less than 50MB in size, got {(len(document) // 1024) // 1024}kB")
+
     if isinstance(thumbnail, str) and os.path.exists(thumbnail):
         _, thumbnail = get_file(thumbnail)
 
+        if len(thumbnail) // 1024 > 200:
+            raise FileTooLargeError(
+                f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
+
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
-    request_data = make_data_form(
-        clear_none_values(exclude_from_dict(locals(), 'view', 'document', 'filename', 'thumbnail')))
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
+                                                           many=True) if caption_entities is not None else None
+    data_form = FormData()
 
     if thumbnail:
-        request_data.add_field('thumbnail', thumbnail)
-    request_data.add_field('document', document, filename=filename)
+        data_form.add_field('thumbnail', thumbnail)
+    data_form.add_field('document', document, filename=filename)
 
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_DOCUMENT, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    if view:
-        view.message = message
-
-    return message
+    return await send(
+        method=APIMethod.SEND_DOCUMENT,
+        **exclude_from_dict(locals(), 'filename', 'kwargs', 'document', "thumbnail"),
+        **kwargs
+    )
 
 
-async def send_video(chat_id: Union[int, str],
-                     video: Union[bytes, str],
-                     thumbnail: Union[bytes, str],
-                     message_thread_id: int = None,
+async def send_video(video: Union[bytes, str],
+                     thumbnail: Union[bytes, str] = None,
                      caption: str = None,
                      duration: int = None,
                      height: int = None,
@@ -418,19 +387,11 @@ async def send_video(chat_id: Union[int, str],
                      supports_streaming: bool = None,
                      parse_mode: ParseMode = ParseMode.NONE,
                      caption_entities: List['MessageEntity'] = None,
-                     disable_notification: bool = None,
-                     reply_to_message_id: int = None,
-                     allow_sending_without_reply: bool = None,
-                     reply_markup: Union[
-                         'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                     view: 'BaseInlineView' = None,
                      filename: str = None,
+                     **kwargs
                      ) -> 'Message':
     """
     Sends a video to a specified chat.
-
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
 
     :param video: `Union[bytes, str]`
         The video to be sent. It can be provided as bytes, a file path (str), or the file_id of a video file
@@ -438,9 +399,6 @@ async def send_video(chat_id: Union[int, str],
 
     :param thumbnail: `Union[bytes, str]`
         The thumbnail of the video. It should be provided as bytes or a file path.
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param caption: `str`
         (Optional) A caption to accompany the video.
@@ -467,34 +425,26 @@ async def send_video(chat_id: Union[int, str],
     :param caption_entities: `List['MessageEntity']`
         (Optional) List of special entities in the caption.
 
-    :param disable_notification: `bool`
         (Optional) Sends the message silently. Users will receive a notification with no sound.
-
-    :param reply_to_message_id: `int`
-        (Optional) If the video is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control the message interface.
 
     :param filename: `str`
         (Optional) The filename to be used when sending the video.
 
-    :return: The sent message object.
-    :rtype: `Message`
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
-          The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320.
+          The thumbnail should be in JPEG format and less than 200 kB in size.
+          A thumbnail's width and height should not exceed 320.
     """
 
     if isinstance(video, str) and os.path.exists(video):
@@ -502,51 +452,40 @@ async def send_video(chat_id: Union[int, str],
     if isinstance(thumbnail, str) and os.path.exists(video):
         _, thumbnail = get_file(thumbnail)
 
+        if len(thumbnail) // 1024 > 200:
+            raise FileTooLargeError(
+                f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
+
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
-    request_data = make_data_form(
-        clear_none_values(exclude_from_dict(locals(), 'view', 'video', 'filename', 'thumbnail')))
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
+                                                           many=True) if caption_entities is not None else None
+    data_form = FormData()
 
     if thumbnail:
-        request_data.add_field('thumbnail', thumbnail)
-    request_data.add_field('video', video, filename=filename)
+        data_form.add_field('thumbnail', thumbnail)
+    data_form.add_field('video', video, filename=filename)
 
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_VIDEO, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    if view:
-        view.message = message
-
-    return message
+    return await send(
+        method=APIMethod.SEND_VIDEO,
+        **exclude_from_dict(locals(), 'filename', 'kwargs', 'video', "thumbnail"),
+        **kwargs
+    )
 
 
-async def send_animation(chat_id: Union[int, str],
-                         animation: Union[bytes, str],
+async def send_animation(animation: Union[bytes, str],
                          thumbnail: Union[bytes, str],
-                         message_thread_id: int = None,
                          caption: str = None,
                          duration: int = None,
                          width: int = None,
                          height: int = None,
                          has_spoiler: bool = None,
-                         protect_content: bool = None,
                          parse_mode: ParseMode = ParseMode.NONE,
                          caption_entities: List['MessageEntity'] = None,
-                         disable_notification: bool = None,
-                         reply_to_message_id: int = None,
-                         allow_sending_without_reply: bool = None,
-                         reply_markup: Union[
-                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
                          filename: str = None,
-                         view: 'BaseInlineView' = None
+                         **kwargs
                          ) -> 'Message':
     """
     Sends an animation to a specified chat.
-
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
 
     :param animation: `Union[bytes, str]`
         The animation to be sent. It can be provided as bytes, a file path (str), or the file_id of an animation file
@@ -554,9 +493,6 @@ async def send_animation(chat_id: Union[int, str],
 
     :param thumbnail: `Union[bytes, str]`
         The thumbnail of the animation. It should be provided as bytes or a file path.
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param caption: `str`
         (Optional) A caption to accompany the animation.
@@ -573,9 +509,6 @@ async def send_animation(chat_id: Union[int, str],
     :param has_spoiler: `bool`
         (Optional) Mark the animation as containing spoilers.
 
-    :param protect_content: `bool`
-        (Optional)Protects the contents of the sent message from forwarding and saving
-
     :param parse_mode: `ParseMode`
         (Optional) The mode for parsing entities in the caption.
         Default is `ParseMode.NONE`.
@@ -583,34 +516,24 @@ async def send_animation(chat_id: Union[int, str],
     :param caption_entities: `List['MessageEntity']`
         (Optional) List of special entities in the caption.
 
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
-
-    :param reply_to_message_id: `int`
-        (Optional) If the animation is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
     :param filename: `str`
         (Optional) The filename to be used when sending the animation.
 
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control the message interface.
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
 
-    :return: The sent message object.
-    :rtype: `Message`
+    :return: `Message`
+        The sent message object.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
-          The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320.
+          The thumbnail should be in JPEG format and less than 200 kB in size.
+          A thumbnail's width and height should not exceed 320.
     """
 
     if isinstance(animation, str) and os.path.exists(animation):
@@ -618,50 +541,39 @@ async def send_animation(chat_id: Union[int, str],
     if isinstance(thumbnail, str) and os.path.exists(thumbnail):
         _, thumbnail = get_file(thumbnail)
 
+        if len(thumbnail) // 1024 > 200:
+            raise FileTooLargeError(
+                f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
+
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
-    request_data = make_data_form(
-        clear_none_values(exclude_from_dict(locals(), 'view', 'animation', 'filename', 'thumbnail')))
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
+                                                           many=True) if caption_entities is not None else None
+    data_form = FormData()
 
     if thumbnail:
-        request_data.add_field('thumbnail', thumbnail)
-    request_data.add_field('animation', animation, filename=filename)
+        data_form.add_field('thumbnail', thumbnail)
+    data_form.add_field('animation', animation, filename=filename)
 
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_ANIMATION, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
+    return await send(
+        method=APIMethod.SEND_ANIMATION,
+        **exclude_from_dict(locals(), 'filename', 'kwargs', 'animation', "thumbnail"),
+        **kwargs
+    )
 
-    return message
 
-
-async def send_voice(chat_id: Union[int, str],
-                     voice: Union[bytes, str],
-                     message_thread_id: int = None,
+async def send_voice(voice: Union[bytes, str],
                      caption: str = None,
                      duration: int = None,
                      parse_mode: ParseMode = ParseMode.NONE,
                      caption_entities: List['MessageEntity'] = None,
-                     disable_notification: bool = None,
-                     reply_to_message_id: int = None,
-                     allow_sending_without_reply: bool = None,
-                     reply_markup: Union[
-                         'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                     filename: str = None,
-                     view: 'BaseInlineView' = None
+                     **kwargs
                      ) -> 'Message':
     """
     Sends a voice message to a specified chat
 
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
-
     :param voice: `Union[bytes, str]`
         The voice message to be sent. It can be provided as bytes, a file path (str), or the file_id of a voice message
         that already exists on the Telegram servers.
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param caption: `str`
         (Optional) A caption to accompany the voice message.
@@ -676,73 +588,44 @@ async def send_voice(chat_id: Union[int, str],
     :param caption_entities: `List['MessageEntity']`
         (Optional) List of special entities in the caption.
 
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
 
-    :param reply_to_message_id: `int`
-        (Optional) If the voice message is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
-    :param filename: `str`
-        (Optional) The filename to be used when sending the voice message.
-
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control the message interface.
-
-    :return: The sent message object.
-    :rtype: `Message`
+    :return: `Message`
+        The sent message object.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
     """
+
     if isinstance(voice, str) and os.path.exists(voice):
-        filename, voice = get_file(voice)
+        _, voice = get_file(voice)
 
     parse_mode = parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
-    request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view', 'filename', 'voice')))
+    caption_entities = MessageEntitySerializer().serialize(
+        obj=caption_entities,
+        many=True
+    ) if caption_entities is not None else None
 
-    request_data.add_field('voice', voice, filename=filename)
-
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_VOICE, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    return message
+    return await send(
+        method=APIMethod.SEND_VOICE,
+        **exclude_from_dict(locals(), 'kwargs'),
+        **kwargs
+    )
 
 
-async def send_video_note(chat_id: Union[int, str],
-                          video_note: Union[bytes, str],
-                          message_thread_id: int = None,
+async def send_video_note(video_note: Union[bytes, str],
                           duration: int = None,
                           length: int = None,
-                          protect_content: bool = None,
-                          disable_notification: bool = None,
-                          reply_to_message_id: int = None,
-                          allow_sending_without_reply: bool = None,
-                          reply_markup: Union[
-                              'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                          view: 'BaseInlineView' = None
+                          **kwargs
                           ) -> 'Message':
     """
     Sends a video note (short video message) to a specified chat.
 
-    :param chat_id: `Union[int, str]`
-        The unique identifier or username of the target chat.
-
     :param video_note: `Union[bytes, str]`
         The video note to be sent. It can be provided as bytes, a file path (str), or the file_id of a video note
         that already exists on the Telegram servers.
-
-    :param message_thread_id: `int`
-        (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
     :param duration: `int`
         (Optional) Duration of the video note in seconds.
@@ -750,26 +633,11 @@ async def send_video_note(chat_id: Union[int, str],
     :param length: `int`
         (Optional) Length of the video note in bytes.
 
-    :param protect_content: `bool`
-        (Optional) Protects the contents of the sent message from forwarding and saving
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
 
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
-
-    :param reply_to_message_id: `int`
-        (Optional) If the video note is a reply, the ID of the original message.
-
-    :param allow_sending_without_reply: `bool`
-        (Optional) Pass True if the message should be sent even if the specified replied-to message is not found
-
-    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        (Optional) Additional interface for the message.
-
-    :param view: `'BaseInlineView'`
-        (Optional) Inline view to control the message interface.
-
-    :return: The sent message object.
-    :rtype: `Message`
+    :return: `Message`
+        The sent message object.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
@@ -777,22 +645,16 @@ async def send_video_note(chat_id: Union[int, str],
     """
 
     if isinstance(video_note, str) and os.path.exists(video_note):
-        filename, video_note = get_file(video_note)
+        _, video_note = get_file(video_note)
 
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view', 'video_note')))
-
-    request_data.add_field('video_note', video_note)
-
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_VIDEO_NOTE, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    return message
+    return await send(
+        method=APIMethod.SEND_VIDEO_NOTE,
+        **exclude_from_dict(locals(), 'kwargs'),
+        **kwargs
+    )
 
 
-async def send_poll(chat_id: Union[int, str],
-                    question: str,
+async def send_poll(question: str,  # TODO: Errors (options length, ...)
                     options: List[str],
                     is_anonymous: bool = True,
                     type_: PollType = None,
@@ -804,59 +666,53 @@ async def send_poll(chat_id: Union[int, str],
                     open_period: int = None,
                     close_date: datetime = None,
                     is_closed: bool = None,
-                    disable_notification: bool = None,
-                    protect_content: bool = None,
-                    reply_to_message_id: int = None,
-                    allow_sending_without_reply: bool = None,
-                    reply_markup: Union[
-                        'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                    view: 'BaseInlineView' = None
+                    **kwargs
                     ) -> 'Message':
     """
     Send a poll to the specified chat.
 
-    :param chat_id: `Union[int, str]`
-        The unique identifier of the target chat or the username of the target channel.
     :param question: `str`
         The poll question.
+
     :param options: `List[str]`
         A list of options for the poll.
+
     :param is_anonymous: `bool`
         (Optional) If True, the poll will be anonymous.
         defaults to True
+
     :param type_: `PollType`
         (Optional) The type of poll to create.
+
     :param allows_multiple_answers: `bool`
         (Optional) If True, the poll allows multiple answers.
+
     :param correct_option_id: `int`
         (Optional) The index of the correct answer option (zero-based).
+
     :param explanation: `str`
         (Optional) Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll,
         0-200 characters with at most 2 line feeds after entities parsing
+
     :param explanation_parse_mode: `ParseMode`
         (Optional) The parse mode of the explanation text.
+
     :param explanation_entities: `List[MessageEntity]`
         (Optional) A list of message entities in the explanation text.
+
     :param open_period: `int`
         (Optional) 	Amount of time in seconds the poll will be active after creation, 5-600.
         Can't be used together with close_date.
+
     :param close_date: `datetime`
         (Optional) Point in time (Unix timestamp) when the poll will be automatically closed.
         Must be at least 5 and no more than 600 seconds in the future. Can't be used together with open_period.
+
     :param is_closed: `bool`
         (Optional) Pass True if the poll needs to be immediately closed. This can be useful for poll preview.
-    :param disable_notification: `bool`
-        (Optional) Sends the message silently. Users will receive a notification with no sound.
-    :param protect_content: `bool`
-        (Optional) If True, the poll's content will be protected from sending by the client.
-    :param reply_to_message_id: `int`
-        (Optional) The ID of the message to reply to.
-    :param allow_sending_without_reply: `bool`
-        (Optional) True if the message should be sent even if the specified replied-to message is not found
-    :param reply_markup: `Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply, dict]`
-        (Optional) An inline keyboard or custom reply markup for the message.
-    :param view: `BaseInlineView`
-        (Optional) Inline view to control the message interface.
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
 
     :return: `Message`
         The sent message object.
@@ -867,14 +723,16 @@ async def send_poll(chat_id: Union[int, str],
     """
 
     explanation_parse_mode = explanation_parse_mode.value
-    reply_markup = await get_converted_reply_markup(reply_markup, view)
-    explanation_entities = MessageEntitySerializer().serialize(obj=explanation_entities, many=True) if explanation_entities is not None else None
+    explanation_entities = MessageEntitySerializer().serialize(
+        obj=explanation_entities,
+        many=True
+    ) if explanation_entities is not None else None
     close_date = close_date.timestamp() if close_date is not None else None
     type_ = type_.value if type_ is not None else None
-    request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view')))
 
-    from teleapi.types.message.serializer import MessageSerializer
-    response, data = await method_request("POST", APIMethod.SEND_POLL, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
-
-    return message
+    return await send(
+        method=APIMethod.SEND_POLL,
+        **exclude_from_dict(locals(), 'kwargs', 'type_'),
+        **kwargs,
+        type=type_
+    )
