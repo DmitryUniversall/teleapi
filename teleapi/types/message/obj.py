@@ -1,8 +1,10 @@
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING, Union, List
 
 from .model import MessageModel
 from teleapi.enums.parse_mode import ParseMode
+from ..poll.sub_object import PollType
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
 
@@ -138,6 +140,32 @@ class Message(MessageModel):
         payload['reply_to_message'] = self
 
         return await self.chat.send_video_note(**payload)
+
+    async def reply_poll(self,
+                         question: str,
+                         options: List[str] = None,
+                         is_anonymous: bool = None,
+                         type_: PollType = None,
+                         allows_multiple_answers: bool = None,
+                         correct_option_id: int = None,
+                         explanation: str = None,
+                         explanation_parse_mode: ParseMode = ParseMode.NONE,
+                         explanation_entities: List['MessageEntity'] = None,
+                         open_period: int = None,
+                         close_date: datetime = None,
+                         is_closed: bool = None,
+                         disable_notification: bool = None,
+                         protect_content: bool = None,
+                         reply_to_message: Union[int, 'Message'] = None,
+                         allow_sending_without_reply: bool = None,
+                         reply_markup: Union[
+                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                         view: 'BaseInlineView' = None
+                         ) -> 'Message':
+        payload = exclude_from_dict(locals(), 'self')
+        payload['reply_to_message'] = self
+
+        return await self.chat.send_poll(**payload)
 
     async def forward(self,
                       to_chat: Union['Chat', int, str],

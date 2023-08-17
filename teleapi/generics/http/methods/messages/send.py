@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import TYPE_CHECKING, List
 from typing import Union
 
@@ -8,7 +9,9 @@ from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
 from teleapi.core.utils.files import get_file
 from teleapi.generics.http.methods.utils import make_data_form
 from teleapi.enums.parse_mode import ParseMode
+from teleapi.types.poll.sub_object import PollType
 from .utils import get_converted_reply_markup
+from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
 
 if TYPE_CHECKING:
     from teleapi.types.message import Message
@@ -16,7 +19,6 @@ if TYPE_CHECKING:
     from teleapi.core.ui.inline_view.view import BaseInlineView
     from teleapi.types.forece_reply import ForceReply
     from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
-    from teleapi.types.message_entity import MessageEntity
     from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
 
 
@@ -29,9 +31,9 @@ async def send_message(chat_id: Union[int, str],
                        disable_notification: bool = None,
                        protect_content: bool = None,
                        allow_sending_without_reply: bool = None,
+                       entities: List['MessageEntity'] = None,
                        reply_markup: Union[
                            'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                       entities: List['MessageEntity'] = None,
                        view: 'BaseInlineView' = None
                        ) -> 'Message':
     """
@@ -84,6 +86,7 @@ async def send_message(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    entities = MessageEntitySerializer().serialize(obj=entities, many=True) if entities is not None else None
     request_data = clear_none_values(exclude_from_dict(locals(), 'view'))
 
     from teleapi.types.message.serializer import MessageSerializer
@@ -142,7 +145,7 @@ async def send_photo(chat_id: Union[int, str],
         (Optional) Sends the message silently. Users will receive a notification with no sound.
 
     :param protect_content: `bool`
-        (Optional) Mark the message content as protected.
+        (Optional)Protects the contents of the sent message from forwarding and saving
 
     :param reply_to_message_id: `int`
         (Optional) If the photo is a reply, the ID of the original message.
@@ -172,6 +175,7 @@ async def send_photo(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
     request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view', 'filename', 'photo')))
 
     request_data.add_field('photo', photo, filename=filename)
@@ -244,7 +248,7 @@ async def send_audio(chat_id: Union[int, str],
         (Optional) Sends the message silently. Users will receive a notification with no sound.
 
     :param protect_content: `bool`
-        (Optional) Mark the message content as protected.
+        (Optional)Protects the contents of the sent message from forwarding and saving
 
     :param reply_to_message_id: `int`
         (Optional) If the audio is a reply, the ID of the original message.
@@ -280,6 +284,7 @@ async def send_audio(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
     request_data = make_data_form(
         clear_none_values(exclude_from_dict(locals(), 'view', 'audio', 'filename', 'thumbnail')))
 
@@ -347,7 +352,7 @@ async def send_document(chat_id: Union[int, str],
         (Optional) Sends the message silently. Users will receive a notification with no sound.
 
     :param protect_content: `bool`
-        (Optional) Mark the message content as protected.
+        (Optional)Protects the contents of the sent message from forwarding and saving
 
     :param reply_to_message_id: `int`
         (Optional) If the document is a reply, the ID of the original message.
@@ -383,6 +388,7 @@ async def send_document(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
     request_data = make_data_form(
         clear_none_values(exclude_from_dict(locals(), 'view', 'document', 'filename', 'thumbnail')))
 
@@ -498,6 +504,7 @@ async def send_video(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
     request_data = make_data_form(
         clear_none_values(exclude_from_dict(locals(), 'view', 'video', 'filename', 'thumbnail')))
 
@@ -567,7 +574,7 @@ async def send_animation(chat_id: Union[int, str],
         (Optional) Mark the animation as containing spoilers.
 
     :param protect_content: `bool`
-        (Optional) Mark the message content as protected.
+        (Optional)Protects the contents of the sent message from forwarding and saving
 
     :param parse_mode: `ParseMode`
         (Optional) The mode for parsing entities in the caption.
@@ -613,6 +620,7 @@ async def send_animation(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
     request_data = make_data_form(
         clear_none_values(exclude_from_dict(locals(), 'view', 'animation', 'filename', 'thumbnail')))
 
@@ -698,6 +706,7 @@ async def send_voice(chat_id: Union[int, str],
 
     parse_mode = parse_mode.value
     reply_markup = await get_converted_reply_markup(reply_markup, view)
+    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities, many=True) if caption_entities is not None else None
     request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view', 'filename', 'voice')))
 
     request_data.add_field('voice', voice, filename=filename)
@@ -742,7 +751,7 @@ async def send_video_note(chat_id: Union[int, str],
         (Optional) Length of the video note in bytes.
 
     :param protect_content: `bool`
-        (Optional) Mark the message content as protected.
+        (Optional) Protects the contents of the sent message from forwarding and saving
 
     :param disable_notification: `bool`
         (Optional) Sends the message silently. Users will receive a notification with no sound.
@@ -777,6 +786,94 @@ async def send_video_note(chat_id: Union[int, str],
 
     from teleapi.types.message.serializer import MessageSerializer
     response, data = await method_request("POST", APIMethod.SEND_VIDEO_NOTE, data=request_data)
+    message = MessageSerializer().serialize(data=data['result'])
+
+    return message
+
+
+async def send_poll(chat_id: Union[int, str],
+                    question: str,
+                    options: List[str],
+                    is_anonymous: bool = True,
+                    type_: PollType = None,
+                    allows_multiple_answers: bool = None,
+                    correct_option_id: int = None,
+                    explanation: str = None,
+                    explanation_parse_mode: ParseMode = ParseMode.NONE,
+                    explanation_entities: List['MessageEntity'] = None,
+                    open_period: int = None,
+                    close_date: datetime = None,
+                    is_closed: bool = None,
+                    disable_notification: bool = None,
+                    protect_content: bool = None,
+                    reply_to_message_id: int = None,
+                    allow_sending_without_reply: bool = None,
+                    reply_markup: Union[
+                        'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                    view: 'BaseInlineView' = None
+                    ) -> 'Message':
+    """
+    Send a poll to the specified chat.
+
+    :param chat_id: `Union[int, str]`
+        The unique identifier of the target chat or the username of the target channel.
+    :param question: `str`
+        The poll question.
+    :param options: `List[str]`
+        A list of options for the poll.
+    :param is_anonymous: `bool`
+        (Optional) If True, the poll will be anonymous.
+        defaults to True
+    :param type_: `PollType`
+        (Optional) The type of poll to create.
+    :param allows_multiple_answers: `bool`
+        (Optional) If True, the poll allows multiple answers.
+    :param correct_option_id: `int`
+        (Optional) The index of the correct answer option (zero-based).
+    :param explanation: `str`
+        (Optional) Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll,
+        0-200 characters with at most 2 line feeds after entities parsing
+    :param explanation_parse_mode: `ParseMode`
+        (Optional) The parse mode of the explanation text.
+    :param explanation_entities: `List[MessageEntity]`
+        (Optional) A list of message entities in the explanation text.
+    :param open_period: `int`
+        (Optional) 	Amount of time in seconds the poll will be active after creation, 5-600.
+        Can't be used together with close_date.
+    :param close_date: `datetime`
+        (Optional) Point in time (Unix timestamp) when the poll will be automatically closed.
+        Must be at least 5 and no more than 600 seconds in the future. Can't be used together with open_period.
+    :param is_closed: `bool`
+        (Optional) Pass True if the poll needs to be immediately closed. This can be useful for poll preview.
+    :param disable_notification: `bool`
+        (Optional) Sends the message silently. Users will receive a notification with no sound.
+    :param protect_content: `bool`
+        (Optional) If True, the poll's content will be protected from sending by the client.
+    :param reply_to_message_id: `int`
+        (Optional) The ID of the message to reply to.
+    :param allow_sending_without_reply: `bool`
+        (Optional) True if the message should be sent even if the specified replied-to message is not found
+    :param reply_markup: `Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply, dict]`
+        (Optional) An inline keyboard or custom reply markup for the message.
+    :param view: `BaseInlineView`
+        (Optional) Inline view to control the message interface.
+
+    :return: `Message`
+        The sent message object.
+
+    :raises:
+        :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
+        :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+    """
+
+    explanation_parse_mode = explanation_parse_mode.value
+    reply_markup = await get_converted_reply_markup(reply_markup, view)
+    explanation_entities = MessageEntitySerializer().serialize(obj=explanation_entities, many=True) if explanation_entities is not None else None
+    close_date = close_date.timestamp() if close_date is not None else None
+    request_data = make_data_form(clear_none_values(exclude_from_dict(locals(), 'view')))
+
+    from teleapi.types.message.serializer import MessageSerializer
+    response, data = await method_request("POST", APIMethod.SEND_POLL, data=request_data)
     message = MessageSerializer().serialize(data=data['result'])
 
     return message
