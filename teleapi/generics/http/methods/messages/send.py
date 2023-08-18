@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
 
 
-async def send(method: APIMethod,
+async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach://<file_attach_name>
                chat_id: int,
                message_thread_id: int = None,
                disable_notification: bool = None,
