@@ -11,6 +11,7 @@ from .exceptions import BadChatType
 from .model import ChatModel
 from ..chat_member import ChatMember, ChatMemberObjectSerializer
 from ..chat_member.sub_objects.administrator import ChatAdministrator, ChatAdministratorSerializer
+from ..chat_permissions import ChatPermissions, ChatPermissionsSerializer
 from ..contact import Contact
 from ..input_media.sub_objects.audio import InputMediaAudio
 from ..input_media.sub_objects.document import InputMediaDocument
@@ -19,6 +20,7 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
 from ...generics.http.methods.messages import *
+from teleapi.types.chat_invite_link import ChatInviteLink, ChatInviteLinkSerializer
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -129,6 +131,319 @@ class Chat(ChatModel):
 
         return bool(data['result'])
 
+    async def restrict_member(self,
+                              user: Union[int, User],
+                              permissions: ChatPermissions,
+                              use_independent_chat_permissions: bool = None,
+                              until_date: datetime = None
+                              ) -> bool:
+        """
+        Description
+
+        :param user: `Union[int, User]`
+            User to be restricted
+
+        :param permissions: `ChatPermissions`
+            New user permissions
+
+        :param use_independent_chat_permissions: `bool`
+            Pass True if chat permissions are set independently.
+            Otherwise, the can_send_other_messages and can_add_web_page_previews permissions
+            will imply the can_send_messages, can_send_audios, can_send_documents,
+            can_send_photos, can_send_videos, can_send_video_notes, and can_send_voice_notes permissions;
+            the can_send_polls permission will imply the can_send_messages permission.
+
+        :param until_date: `datetime`
+            Date when restrictions will be lifted for the user, unix time.
+            If user is restricted for more than 366 days or less than 30 seconds from the current time,
+            they are considered to be restricted forever
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.RESTRICT_CHAT_MEMBER, data={
+            'chat_id': self.id,
+            'user_id': user if isinstance(user, int) else user.id,
+            'permissions': ChatPermissionsSerializer().serialize(obj=permissions),
+            'use_independent_chat_permissions': use_independent_chat_permissions,
+            'until_date': until_date.timestamp()
+        })
+
+        return bool(data['result'])
+
+    async def promote_member(self,
+                             user: Union[int, User],
+                             is_anonymous: bool = None,
+                             can_manage_chat: bool = None,
+                             can_post_messages: bool = None,
+                             can_edit_messages: bool = None,
+                             can_delete_messages: bool = None,
+                             can_manage_video_chats: bool = None,
+                             can_restrict_members: bool = None,
+                             can_promote_members: bool = None,
+                             can_change_info: bool = None,
+                             can_invite_users: bool = None,
+                             can_pin_messages: bool = None,
+                             can_manage_topics: bool = None,
+                             ) -> bool:
+        """
+        Promote a member to an administrator in the chat with specified privileges.
+
+        :param user: `Union[int, User]`
+            The user ID or User object of the member to be promoted.
+
+        :param is_anonymous: `bool`
+            (Optional) Pass True if the promoted administrator's actions should be shown as anonymous in the chat.
+
+        :param can_manage_chat: `bool`
+            (Optional) Pass True if the administrator can access the chat event log, chat statistics, message statistics
+            in channels, see channel members, see anonymous administrators in supergroups, and ignore slow mode.
+            Implied by any other administrator privilege.
+
+        :param can_post_messages: `bool`
+            (Optional) Pass True if the administrator can create channel posts. (Channels only)
+
+        :param can_edit_messages: `bool`
+            (Optional) Pass True if the administrator can edit messages of other users and can pin messages. (Channels only)
+
+        :param can_delete_messages: `bool`
+            (Optional) Pass True if the administrator can delete messages of other users.
+
+        :param can_manage_video_chats: `bool`
+            (Optional) Pass True if the administrator can manage video chats.
+
+        :param can_restrict_members: `bool`
+            (Optional) Pass True if the administrator can restrict, ban, or unban chat members.
+
+        :param can_promote_members: `bool`
+            (Optional) Pass True if the administrator can add new administrators with a subset of their own privileges or
+            demote administrators that they have promoted,
+            directly or indirectly (promoted by administrators that were appointed by them).
+
+        :param can_change_info: `bool`
+            (Optional) Pass True if the administrator can change chat title, photo, and other settings.
+
+        :param can_invite_users: `bool`
+            (Optional) Pass True if the administrator can invite new users to the chat.
+
+        :param can_pin_messages: `bool`
+            (Optional) Pass True if the administrator can pin messages. (Supergroups only)
+
+        :param can_manage_topics: `bool`
+            (Optional) Pass True if the user is allowed to create, rename, close, and reopen forum topics. (Supergroups only)
+
+        :return: `bool`
+            Returns True if the member was successfully promoted
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.PROMOTE_CHAT_MEMBER, data={
+            'chat_id': self.id,
+            'user_id': user if isinstance(user, int) else user.id,
+            **exclude_from_dict(locals(), 'user', 'self')
+        })
+
+        return bool(data['result'])
+
+    async def set_administrator_custom_title(self, user: Union[int, User], custom_title: str) -> bool:
+        """
+        Set a custom title for an administrator in a supergroup promoted by the bot
+
+        :param user: `type`
+            The user ID or User object of the member to be promoted.
+
+        :param custom_title: `type`
+            New custom title for the administrator; 0-16 characters, emoji are not allowed
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ValueError: if custom_title is longer than 16 characters
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        if len(custom_title) > 16:
+            raise ValueError("New custom title for the administrator must be less than 16 characters long")
+
+        response, data = await method_request("post", APIMethod.SET_CHAT_ADMIN_CUSTOM_TITLE, data={
+            'chat_id': self.id,
+            'user_id': user if isinstance(user, int) else user.id,
+            **exclude_from_dict(locals(), 'user', 'self')
+        })
+
+        return bool(data['result'])
+
+    async def ban_sender_chat(self, sender_chat: Union[int, 'Chat']) -> bool:
+        """
+        Bans a channel chat in a supergroup or a channel.
+        Until the chat is unbanned, the owner of the banned chat won't be able to send
+        messages on behalf of their channels. The bot must be an administrator in the supergroup
+        or channel for this to work and must have the appropriate administrator rights
+
+        :param sender_chat: `Union[int, 'Chat']`
+            The sender_chat ID or Chat object of the chat to be banned.
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.BAN_CHAT_SENDER_CHAT, data={
+            'chat_id': self.id,
+            'sender_chat_id': sender_chat if isinstance(sender_chat, int) else sender_chat.id,
+            **exclude_from_dict(locals(), 'sender_chat', 'self')
+        })
+
+        return bool(data['result'])
+
+    async def unban_sender_chat(self, sender_chat: Union[int, 'Chat']) -> bool:
+        """
+        Unbans a previously banned channel chat in a supergroup or channel.
+        The bot must be an administrator for this to work and must have the appropriate administrator rights.
+
+        :param sender_chat: `Union[int, 'Chat']`
+            The sender_chat ID or Chat object of the chat to be unbanned.
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.UNBAN_CHAT_SENDER_CHAT, data={
+            'chat_id': self.id,
+            'sender_chat_id': sender_chat if isinstance(sender_chat, int) else sender_chat.id,
+            **exclude_from_dict(locals(), 'sender_chat', 'self')
+        })
+
+        return bool(data['result'])
+
+    async def set_default_permissions(self,
+                                      permissions: ChatPermissions,
+                                      use_independent_chat_permissions: bool = None) -> bool:
+        """
+        Set default chat permissions for all members.
+        The bot must be an administrator in the group or a supergroup for this
+        to work and must have the can_restrict_members administrator rights.
+
+        :param permissions: `ChatPermissions`
+            New default chat permissions
+
+        :param use_independent_chat_permissions: `bool`
+            Pass True if chat permissions are set independently.
+            Otherwise, the can_send_other_messages and can_add_web_page_previews permissions
+            will imply the can_send_messages, can_send_audios, can_send_documents,
+            can_send_photos, can_send_videos, can_send_video_notes, and can_send_voice_notes permissions;
+            the can_send_polls permission will imply the can_send_messages permission.
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.SET_CHAT_PERMISSIONS, data={
+            'chat_id': self.id,
+            'permissions': ChatPermissionsSerializer().serialize(obj=permissions),
+            'use_independent_chat_permissions': use_independent_chat_permissions,
+            **exclude_from_dict(locals(), 'permissions', 'self')
+        })
+
+        return bool(data['result'])
+
+    async def export_invite_link(self) -> str:
+        """
+        Generates a new primary invite link for a chat; any previously generated primary link is revoked.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+
+        :return: `str`
+            New invite link
+
+        Notes:
+         - Each administrator in a chat generates their own invite links.
+         Bots can't use invite links generated by other administrators.
+         If you want your bot to work with invite links, it will need to generate its own link
+         using exportChatInviteLink or by calling the getChat method.
+         If your bot needs to generate a new primary invite link replacing its previous one, use exportChatInviteLink again.
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.EXPORT_CHAT_INVITE_LINK, data={
+            'chat_id': self.id,
+        })
+
+        return str(data['result'])
+
+    async def create_invite_link(self,
+                                 name: str = None,
+                                 expire_date: datetime = None,
+                                 member_limit: int = None,
+                                 creates_join_request: bool = None) -> ChatInviteLink:
+        """
+        Creates an additional invite link for a chat.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+        The link can be revoked using the method revokeChatInviteLink.
+
+        :param name: `str`
+            Invite link name; 0-32 characters
+
+        :param expire_date: `datetime`
+            Point in time when the link will expire
+
+        :param member_limit: `int`
+            The maximum number of users that can be members of the chat
+            simultaneously after joining the chat via this invite link; 1-99999
+
+        :param creates_join_request: `bool`
+            True, if users joining the chat via the link need to be approved by chat administrators.
+            If True, member_limit can't be specified
+
+        :return: `ChatInviteLink`
+            New invite link
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.CREATE_CHAT_INVITE_LINK, data={
+            'chat_id': self.id,
+            'name': name,
+            'expire_date': expire_date.timestamp(),
+            'member_limit': member_limit,
+            'creates_join_request': creates_join_request
+        })
+
+        return ChatInviteLinkSerializer().serialize(data=data)
+
     async def send_action(self, action: ChatAction, message_thread_id: int = None) -> bool:
         """
         Sends a chat action to indicate the current status of the bot in the chat.
@@ -140,6 +455,10 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True if the action was successfully sent
+
+        Notes:
+         - Status is shown for 5 seconds or less (when a message arrives from your bot,
+         Telegram clients clear its typing status)
 
         :raises:
             :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
@@ -445,7 +764,8 @@ class Chat(ChatModel):
         return await send_dice(**payload)
 
     async def send_media_group(self,
-                               media: List[Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
+                               media: List[
+                                   Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
                                disable_notification: bool = None,
                                protect_content: bool = None,
                                reply_to_message: Union[int, 'Message'] = None,
@@ -453,7 +773,7 @@ class Chat(ChatModel):
                                reply_markup: Union[
                                    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
                                view: 'BaseInlineView' = None
-                               ) -> 'Message':
+                               ) -> List['Message']:
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_media_group
         """

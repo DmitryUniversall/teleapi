@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING, Union, List
 from .model import MessageModel
 from teleapi.enums.parse_mode import ParseMode
 from ..contact import Contact
+from ..input_media.sub_objects.audio import InputMediaAudio
+from ..input_media.sub_objects.document import InputMediaDocument
+from ..input_media.sub_objects.photo import InputMediaPhoto
+from ..input_media.sub_objects.video import InputMediaVideo
 from ..poll.sub_object import PollType
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
@@ -194,6 +198,21 @@ class Message(MessageModel):
         payload['reply_to_message'] = self
 
         return await self.chat.send_dice(**payload)
+
+    async def reply_media_group(self,
+                                media: List[
+                                    Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
+                                disable_notification: bool = None,
+                                protect_content: bool = None,
+                                allow_sending_without_reply: bool = None,
+                                reply_markup: Union[
+                                    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                view: 'BaseInlineView' = None
+                                ) -> List['Message']:
+        payload = exclude_from_dict(locals(), 'self')
+        payload['reply_to_message'] = self
+
+        return await self.chat.send_media_group(**payload)
 
     async def forward(self,
                       to_chat: Union['Chat', int, str],

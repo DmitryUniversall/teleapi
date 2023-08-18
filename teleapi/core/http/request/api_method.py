@@ -54,3 +54,6 @@ class APIMethod(Enum):
     STOP_POLL = "stopPoll"
     DELETE_MESSAGE = "deleteMessage"
     COPY_MESSAGE = "copyMessage"
+    BAN_CHAT_SENDER_CHAT = "banChatSenderChat"
+    UNBAN_CHAT_SENDER_CHAT = "unbanChatSenderChat"
+    CREATE_CHAT_INVITE_LINK = 'createChatInviteLink'
