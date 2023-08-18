@@ -77,6 +77,12 @@ class Gone(ApiRequestError):
     status_code = 410
 
 
+class RequestEntityTooLarge(ApiRequestError):
+    default_message = "Request Entity Too Large"
+    description = "The requested resource is no longer available and has been permanently removed."
+    status_code = 413
+
+
 class UnsupportedMediaType(ApiRequestError):
     default_message = "Unsupported Media Type"
     description = "The media format of the requested data is not supported."
@@ -112,6 +118,7 @@ error_status_mapping = {
     504: GatewayTimeout,
     409: Conflict,
     410: Gone,
+    413: RequestEntityTooLarge,
     415: UnsupportedMediaType,
     422: UnprocessableEntity,
     429: TooManyRequests

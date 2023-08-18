@@ -838,14 +838,17 @@ async def send_dice(emoji: str = None, **kwargs) -> 'Message':
 async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
                            **kwargs) -> List['Message']:
     """
-    Send the dice to the specified chat.
+    Sends a group of photos, videos, documents or audios as an album.
+    Documents and audio files can be only grouped on an album with messages of the same type.
+    On success, an array of Messages that were sent is returned.
 
     :param media: `list[Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]]`
+        Media objects to be sent
 
     :param kwargs: `dict`
         Other parameters specified in `send` function above
 
-    :return: `Message`
+    :return: `List['Message']`
         The sent message object.
 
     :raises:
@@ -853,7 +856,8 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         :raise ValueError: If the length of provided media is less than 2 or gather than 10
-        :raise ValueError: If media object has 'data', but has no 'filename'
+        :raise ValueError: If media object has 'data' or 'thumbnail_data', but has no 'filename' or 'thumbnail_filename'
+        :raise TypeError: If type grouping rules violated
     """
 
     if not (2 <= len(media) <= 10):
@@ -863,19 +867,22 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
     request_data = exclude_from_dict(locals(), 'kwargs', 'media')
 
     serialized_media = []
-    media_type = type(media[0])
+
+    media_types = [type(file) for file in media]
+
+    if InputMediaDocument in media_types and any((t in media_types for t in [InputMediaAudio, InputMediaPhoto, InputMediaVideo])):
+        raise TypeError('Documents files can be only grouped on an album with messages of the same type')
+    if InputMediaAudio in media_types and any((t in media_types for t in [InputMediaDocument, InputMediaPhoto, InputMediaVideo])):
+        raise TypeError('Audio files can be only grouped on an album with messages of the same type')
 
     for file in media:
-        if not isinstance(file, media_type):
-            raise TypeError("Only one type of objects can be sent")
-
         if file.data is not None:
             if file.filename is None:
                 raise ValueError(f"filename was not specified")
 
             data_form.add_field(file.filename, file.data)
 
-        if file.thumbnail_data is not None:
+        if hasattr(file, 'thumbnail_data') and file.thumbnail_data is not None:
             if file.thumbnail_filename is None:
                 raise ValueError(f"thumbnail_filename was not specified")
 
