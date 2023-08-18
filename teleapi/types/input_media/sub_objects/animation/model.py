@@ -1,10 +1,13 @@
-from teleapi.core.orm.models.generics.fields import BooleanModelField, ConstantModelField
+from teleapi.core.orm.models.generics.fields import IntegerModelField, BooleanModelField, ConstantModelField
 from teleapi.types.input_media import InputMediaModel
 
 
-class InputMediaDocumentModel(InputMediaModel):
-    type_: str = ConstantModelField("document")
-    disable_content_type_detection: bool = BooleanModelField(default=False)
+class InputMediaAnimationModel(InputMediaModel):
+    type_: str = ConstantModelField("animation")
+    width: int = IntegerModelField(is_required=False)
+    height: int = IntegerModelField(is_required=False)
+    duration: int = IntegerModelField(is_required=False)
+    has_spoiler: bool = BooleanModelField(default=False)
 
     def __init__(self, *, thumbnail_data: bytes = None, thumbnail_filename: str = None, **kwargs) -> None:
         super().__init__(**kwargs)

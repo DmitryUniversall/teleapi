@@ -4,6 +4,15 @@ from typing import Any
 from teleapi.core.orm.serializers.field import SerializerField
 from teleapi.core.orm.typing import JsonValue
 from teleapi.core.orm.validators.generics.base_types import BooleanValidator, IntegerValidator, StringValidator
+from teleapi.core.orm.validators.validator import Validator
+
+
+class BytesSerializerField(SerializerField, Validator):
+    def to_object(self, value: JsonValue) -> Any:
+        return bytes(value)
+
+    def to_representation(self, obj: Any, **_) -> bytes:
+        return bytes(obj)
 
 
 class BooleanSerializerField(SerializerField, BooleanValidator):

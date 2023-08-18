@@ -1,10 +1,10 @@
 from teleapi.core.orm.serializers.generics.fields import StringSerializerField
 from teleapi.types.input_media import InputMediaSerializer
-from .obj import InputMediaPhoto
+from .obj import InputMediaAnimation
 
 
-class InputMediaPhotoSerializer(InputMediaSerializer):
+class InputMediaAnimationSerializer(InputMediaSerializer):
     thumbnail = StringSerializerField(is_required=False)
 
     class Meta:
-        model = InputMediaPhoto
+        model = InputMediaAnimation

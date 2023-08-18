@@ -34,8 +34,4 @@ AllowedUpdates_default = [AllowedUpdates.MESSAGE, AllowedUpdates.EDITED_MESSAGE,
                           AllowedUpdates.SHIPPING_QUERY, AllowedUpdates.PRE_CHECKOUT_QUERY, AllowedUpdates.POLL,
                           AllowedUpdates.POLL_ANSWER, AllowedUpdates.CHAT_JOIN_REQUEST]
 
-AllowedUpdates_all = [AllowedUpdates.MESSAGE, AllowedUpdates.EDITED_MESSAGE, AllowedUpdates.CHANNEL_POST,
-                      AllowedUpdates.EDITED_CHANNEL_POST, AllowedUpdates.INLINE_QUERY,
-                      AllowedUpdates.CHOSEN_INLINE_RESULT, AllowedUpdates.CALLBACK_QUERY, AllowedUpdates.SHIPPING_QUERY,
-                      AllowedUpdates.PRE_CHECKOUT_QUERY, AllowedUpdates.POLL, AllowedUpdates.POLL_ANSWER,
-                      AllowedUpdates.CHAT_JOIN_REQUEST, AllowedUpdates.CHAT_MEMBER, AllowedUpdates.MY_CHAT_MEMBER]
+AllowedUpdates_all = list(AllowedUpdates)

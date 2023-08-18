@@ -1,10 +1,11 @@
-from teleapi.core.orm.models.generics.fields import BooleanModelField, ConstantModelField
+from teleapi.core.orm.models.generics.fields import IntegerModelField, StringModelField, ConstantModelField
 from teleapi.types.input_media import InputMediaModel
 
 
-class InputMediaDocumentModel(InputMediaModel):
-    type_: str = ConstantModelField("document")
-    disable_content_type_detection: bool = BooleanModelField(default=False)
+class InputMediaAudioModel(InputMediaModel):
+    type_: str = ConstantModelField("audio")
+    duration: int = IntegerModelField(is_required=False)
+    performer: str = StringModelField(is_required=False)
 
     def __init__(self, *, thumbnail_data: bytes = None, thumbnail_filename: str = None, **kwargs) -> None:
         super().__init__(**kwargs)
