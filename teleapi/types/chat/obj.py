@@ -434,6 +434,9 @@ class Chat(ChatModel):
             :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
+        if len(name) > 30:
+            raise ValueError("Link name must be less than 30 characters long")
+
         response, data = await method_request("post", APIMethod.CREATE_CHAT_INVITE_LINK, data={
             'chat_id': self.id,
             'name': name,
