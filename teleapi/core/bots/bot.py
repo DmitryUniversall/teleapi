@@ -158,11 +158,11 @@ class Bot(BaseBot):
             )
         if update.chat_member:
             asyncio.create_task(
-                self.call_event(update, UpdateEvent.ON_CHAT_MEMBER_UPDATED, chat_member_update=update.chat_member)
+                self.call_event(update, UpdateEvent.ON_CHAT_MEMBER_UPDATED, member_update=update.chat_member)
             )
         if update.bot_chat_member:
             asyncio.create_task(
-                self.call_event(update, UpdateEvent.ON_BOT_CHAT_MEMBER_UPDATED, bot_chat_member_update=update.bot_chat_member)
+                self.call_event(update, UpdateEvent.ON_BOT_CHAT_MEMBER_UPDATED, bot_member_update=update.bot_chat_member)
             )
         if update.poll:
             asyncio.create_task(
