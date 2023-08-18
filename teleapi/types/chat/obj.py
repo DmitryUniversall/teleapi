@@ -9,10 +9,10 @@ from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.user import User
 from .model import ChatModel
 from ..chat_member.sub_objects.administrator import ChatAdministrator, ChatAdministratorSerializer
+from ..contact import Contact
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
-from ...generics.http.methods.messages import send_message, edit_message_text, send_photo, copy_message, \
-    forward_message, send_audio, send_document, send_video, send_video_note, send_poll
+from ...generics.http.methods.messages import *
 from ..chat_member import ChatMember, ChatMemberObjectSerializer
 from .exceptions import BadChatType
 
@@ -397,6 +397,27 @@ class Chat(ChatModel):
         payload['chat_id'] = self.id
 
         return await send_poll(**payload)
+
+    async def send_contact(self,
+                           contact: 'Contact',
+                           disable_notification: bool = None,
+                           protect_content: bool = None,
+                           reply_to_message: Union[int, 'Message'] = None,
+                           allow_sending_without_reply: bool = None,
+                           reply_markup: Union[
+                               'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                           view: 'BaseInlineView' = None
+                           ) -> 'Message':
+        """
+        Abbreviation for the teleapi.generics.http.methods.messages.send.send_contact
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
+        payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
+                                                                        int) or reply_to_message is None else reply_to_message.id
+        payload['chat_id'] = self.id
+
+        return await send_contact(**payload)
 
     async def edit_message_text(self,
                                 text: str,

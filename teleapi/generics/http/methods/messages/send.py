@@ -12,6 +12,7 @@ from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
 from teleapi.core.utils.files import get_file
 from teleapi.generics.http.methods.utils import make_data_form
 from teleapi.enums.parse_mode import ParseMode
+from teleapi.types.contact import Contact, ContactSerializer
 from teleapi.types.poll.sub_object import PollType
 from .utils import get_converted_reply_markup
 from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
@@ -76,6 +77,7 @@ async def send(method: APIMethod,
     :raises:
         :raise: ApiRequestError or any of its subclasses if request sent to the Telegram Bot API failed
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
     """
     reply_markup = await get_converted_reply_markup(reply_markup, view)
 
@@ -134,6 +136,7 @@ async def send_message(text: str,
     :raises:
         :raise: ApiRequestError or any of its subclasses if request sent to the Telegram Bot API failed
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
     """
 
     parse_mode = parse_mode.value
@@ -187,6 +190,7 @@ async def send_photo(photo: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API sent fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified photo is more than 10MB in size
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
     """
 
     if isinstance(photo, str) and os.path.exists(photo):
@@ -262,6 +266,7 @@ async def send_audio(audio: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -340,6 +345,7 @@ async def send_document(document: Union[bytes, str],
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified document is mode than 50MB in size
         or thumbnail is more than 200kB in size
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -440,6 +446,7 @@ async def send_video(video: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -529,6 +536,7 @@ async def send_animation(animation: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -597,6 +605,7 @@ async def send_voice(voice: Union[bytes, str],
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
     """
 
     if isinstance(voice, str) and os.path.exists(voice):
@@ -642,6 +651,7 @@ async def send_video_note(video_note: Union[bytes, str],
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
     """
 
     if isinstance(video_note, str) and os.path.exists(video_note):
@@ -720,6 +730,7 @@ async def send_poll(question: str,  # TODO: Errors (options length, ...)
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
     """
 
     explanation_parse_mode = explanation_parse_mode.value
@@ -735,4 +746,33 @@ async def send_poll(question: str,  # TODO: Errors (options length, ...)
         **exclude_from_dict(locals(), 'kwargs', 'type_'),
         **kwargs,
         type=type_
+    )
+
+
+async def send_contact(contact: 'Contact', **kwargs) -> 'Message':
+    """
+    Send a contact to the specified chat.
+
+    :param contact: `str`
+        The contact to be sent
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
+
+    :raises:
+        :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
+        :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+    """
+
+    contact = ContactSerializer().serialize(obj=contact)
+
+    return await send(
+        method=APIMethod.SEND_CONTACT,
+        **exclude_from_dict(locals(), 'kwargs', 'contact'),
+        **kwargs,
+        **contact
     )

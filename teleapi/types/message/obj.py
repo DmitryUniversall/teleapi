@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Union, List
 
 from .model import MessageModel
 from teleapi.enums.parse_mode import ParseMode
+from ..contact import Contact
 from ..poll.sub_object import PollType
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
@@ -166,6 +167,20 @@ class Message(MessageModel):
 
         return await self.chat.send_poll(**payload)
 
+    async def reply_contact(self,
+                            contact: 'Contact',
+                            disable_notification: bool = None,
+                            protect_content: bool = None,
+                            allow_sending_without_reply: bool = None,
+                            reply_markup: Union[
+                                'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                            view: 'BaseInlineView' = None
+                            ) -> 'Message':
+        payload = exclude_from_dict(locals(), 'self')
+        payload['reply_to_message'] = self
+
+        return await self.chat.send_contact(**payload)
+
     async def forward(self,
                       to_chat: Union['Chat', int, str],
                       message_thread_id: int = None,
@@ -214,7 +229,8 @@ class Message(MessageModel):
                    ) -> int:
         payload = exclude_from_dict(locals(), 'self')
         payload['message'] = self
-        payload['reply_to_message'] = reply_to_message if isinstance(reply_to_message, int) or reply_to_message is None else reply_to_message.id
+        payload['reply_to_message'] = reply_to_message if isinstance(reply_to_message,
+                                                                     int) or reply_to_message is None else reply_to_message.id
         payload['caption'] = default(caption, self.caption)
         payload['caption_entities'] = default(caption_entities, self.caption_entities)
         payload['reply_markup'] = default(reply_markup, self.reply_markup)
