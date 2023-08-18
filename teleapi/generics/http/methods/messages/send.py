@@ -11,12 +11,17 @@ from teleapi.core.http.request.api_request import method_request
 from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
 from teleapi.core.utils.files import get_file
 from teleapi.core.utils.syntax import default
-from teleapi.generics.http.methods.utils import make_data_form
 from teleapi.enums.parse_mode import ParseMode
+from teleapi.generics.http.methods.utils import make_data_form
 from teleapi.types.contact import Contact, ContactSerializer
+from teleapi.types.input_media.input_media_serializer import InputMediaObjectSerializer
+from teleapi.types.input_media.sub_objects.audio import InputMediaAudio
+from teleapi.types.input_media.sub_objects.document import InputMediaDocument
+from teleapi.types.input_media.sub_objects.photo import InputMediaPhoto
+from teleapi.types.input_media.sub_objects.video import InputMediaVideo
+from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
 from teleapi.types.poll.sub_object import PollType
 from .utils import get_converted_reply_markup
-from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
 
 if TYPE_CHECKING:
     from teleapi.types.message import Message
@@ -38,7 +43,7 @@ async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach
                    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
                view: 'BaseInlineView' = None,
                **kwargs
-               ) -> 'Message':
+               ) -> Union['Message', List['Message']]:
     """
     Sends the message of any type (text, photo, video...)
 
@@ -72,13 +77,13 @@ async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach
     :param kwargs: `dict`
         (Optional) Any other request parameters
 
-    :return: `Message`
+    :return: `Union['Message', List['Message']]`
         The sent message.
 
     :raises:
         :raise: ApiRequestError or any of its subclasses if request sent to the Telegram Bot API failed
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
     reply_markup = await get_converted_reply_markup(reply_markup, view)
 
@@ -98,10 +103,11 @@ async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach
 
     from teleapi.types.message.serializer import MessageSerializer
     response, data = await method_request("POST", method, data=request_data)
-    message = MessageSerializer().serialize(data=data['result'])
+    message = MessageSerializer().serialize(data=data['result'], many=isinstance(data['result'], list))
 
     if view:
-        view.message = message
+        if isinstance(message, list):
+            view.message = message[-1]
 
     return message
 
@@ -137,11 +143,15 @@ async def send_message(text: str,
     :raises:
         :raise: ApiRequestError or any of its subclasses if request sent to the Telegram Bot API failed
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
     parse_mode = parse_mode.value
-    entities = MessageEntitySerializer().serialize(obj=entities, many=True) if entities is not None else None
+    entities = MessageEntitySerializer().serialize(
+        obj=entities,
+        many=True,
+        keep_none_fields=False
+    ) if entities is not None else None
 
     return await send(
         method=APIMethod.SEND_MESSAGE,
@@ -191,7 +201,7 @@ async def send_photo(photo: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API sent fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified photo is more than 10MB in size
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
     if isinstance(photo, str) and os.path.exists(photo):
@@ -202,8 +212,11 @@ async def send_photo(photo: Union[bytes, str],
                 f"Specified photo must be less than 10MB in size, got {(len(photo) // 1024) // 1024}kB")
 
     parse_mode = parse_mode.value
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
-                                                           many=True) if caption_entities is not None else None
+    caption_entities = MessageEntitySerializer().serialize(
+        obj=caption_entities,
+        many=True,
+        keep_none_fields=False
+    ) if caption_entities is not None else None
     data_form = FormData()
     data_form.add_field('photo', photo, filename=filename)
 
@@ -267,7 +280,7 @@ async def send_audio(audio: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -285,8 +298,11 @@ async def send_audio(audio: Union[bytes, str],
                 f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
 
     parse_mode = parse_mode.value
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
-                                                           many=True) if caption_entities is not None else None
+    caption_entities = MessageEntitySerializer().serialize(
+        obj=caption_entities,
+        many=True,
+        keep_none_fields=False
+    ) if caption_entities is not None else None
     data_form = FormData()
 
     if thumbnail:
@@ -346,7 +362,7 @@ async def send_document(document: Union[bytes, str],
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified document is mode than 50MB in size
         or thumbnail is more than 200kB in size
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -369,8 +385,11 @@ async def send_document(document: Union[bytes, str],
                 f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
 
     parse_mode = parse_mode.value
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
-                                                           many=True) if caption_entities is not None else None
+    caption_entities = MessageEntitySerializer().serialize(
+        obj=caption_entities,
+        many=True,
+        keep_none_fields=False
+    ) if caption_entities is not None else None
     data_form = FormData()
 
     if thumbnail:
@@ -447,7 +466,7 @@ async def send_video(video: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -465,8 +484,11 @@ async def send_video(video: Union[bytes, str],
                 f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
 
     parse_mode = parse_mode.value
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
-                                                           many=True) if caption_entities is not None else None
+    caption_entities = MessageEntitySerializer().serialize(
+        obj=caption_entities,
+        many=True,
+        keep_none_fields=False
+    ) if caption_entities is not None else None
     data_form = FormData()
 
     if thumbnail:
@@ -537,7 +559,7 @@ async def send_animation(animation: Union[bytes, str],
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise FileTooLargeError: If specified thumbnail is more than 200kB in size
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
 
     Notes:
         - Thumbnail can be ignored if thumbnail generation for the file is supported server-side.
@@ -555,8 +577,11 @@ async def send_animation(animation: Union[bytes, str],
                 f"Specified thumbnail must be less than 200kB in size, got {len(thumbnail) // 1024}kB")
 
     parse_mode = parse_mode.value
-    caption_entities = MessageEntitySerializer().serialize(obj=caption_entities,
-                                                           many=True) if caption_entities is not None else None
+    caption_entities = MessageEntitySerializer().serialize(
+        obj=caption_entities,
+        many=True,
+        keep_none_fields=False
+    ) if caption_entities is not None else None
     data_form = FormData()
 
     if thumbnail:
@@ -606,7 +631,7 @@ async def send_voice(voice: Union[bytes, str],
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
     if isinstance(voice, str) and os.path.exists(voice):
@@ -615,7 +640,8 @@ async def send_voice(voice: Union[bytes, str],
     parse_mode = parse_mode.value
     caption_entities = MessageEntitySerializer().serialize(
         obj=caption_entities,
-        many=True
+        many=True,
+        keep_none_fields=False
     ) if caption_entities is not None else None
 
     return await send(
@@ -652,7 +678,7 @@ async def send_video_note(video_note: Union[bytes, str],
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
     if isinstance(video_note, str) and os.path.exists(video_note):
@@ -731,13 +757,14 @@ async def send_poll(question: str,  # TODO: Errors (options length, ...)
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
     explanation_parse_mode = explanation_parse_mode.value
     explanation_entities = MessageEntitySerializer().serialize(
         obj=explanation_entities,
-        many=True
+        many=True,
+        keep_none_fields=False
     ) if explanation_entities is not None else None
     close_date = close_date.timestamp() if close_date is not None else None
     type_ = type_.value if type_ is not None else None
@@ -766,10 +793,10 @@ async def send_contact(contact: 'Contact', **kwargs) -> 'Message':
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
-    contact = ContactSerializer().serialize(obj=contact)
+    contact = ContactSerializer().serialize(obj=contact, keep_none_fields=False)
 
     return await send(
         method=APIMethod.SEND_CONTACT,
@@ -796,7 +823,7 @@ async def send_dice(emoji: str = None, **kwargs) -> 'Message':
     :raises:
         :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
     """
 
     emoji = default(emoji, '🎲')
@@ -804,5 +831,63 @@ async def send_dice(emoji: str = None, **kwargs) -> 'Message':
     return await send(
         method=APIMethod.SEND_DICE,
         **exclude_from_dict(locals(), 'kwargs'),
+        **kwargs
+    )
+
+
+async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
+                           **kwargs) -> List['Message']:
+    """
+    Send the dice to the specified chat.
+
+    :param media: `list[Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]]`
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
+
+    :raises:
+        :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
+        :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        :raise ValueError: If the length of provided media is less than 2 or gather than 10
+        :raise ValueError: If media object has 'data', but has no 'filename'
+    """
+
+    if not (2 <= len(media) <= 10):
+        raise ValueError(f"The length of provided media must be gather or equal 2 and less or equal 10")
+
+    data_form = FormData()
+    request_data = exclude_from_dict(locals(), 'kwargs', 'media')
+
+    serialized_media = []
+    media_type = type(media[0])
+
+    for file in media:
+        if not isinstance(file, media_type):
+            raise TypeError("Only one type of objects can be sent")
+
+        if file.data is not None:
+            if file.filename is None:
+                raise ValueError(f"filename was not specified")
+
+            data_form.add_field(file.filename, file.data)
+
+        if file.thumbnail_data is not None:
+            if file.thumbnail_filename is None:
+                raise ValueError(f"thumbnail_filename was not specified")
+
+            data_form.add_field(file.thumbnail_filename, file.thumbnail_data)
+
+        serialized_media.append(
+            InputMediaObjectSerializer().serialize(obj=file, keep_none_fields=False)
+        )
+
+    return await send(
+        method=APIMethod.SEND_MEDIA_GROUP,
+        media=serialized_media,
+        **request_data,
         **kwargs
     )

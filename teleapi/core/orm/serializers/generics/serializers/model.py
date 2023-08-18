@@ -53,7 +53,7 @@ class ModelSerializerMeta(SerializerMeta):  # TODO: Переписать
         else:
             model_fields = model.__fields__
 
-        enable_warnings = getattr(meta, "enable_warnings", True)
+        enable_warnings = getattr(cls, "__enable_warnings__", True)
 
         for model_field in model_fields:
             if model_field.__attribute_name__ in existing_field_names:
@@ -62,9 +62,10 @@ class ModelSerializerMeta(SerializerMeta):  # TODO: Переписать
             # noinspection PyTypeChecker
             serializer_field = mcs.fields_mapping.get(model_field.__class__)
 
-            if not serializer_field and enable_warnings:
-                warnings.warn(
-                    f"Field {model_field} was declared in model, but it is not supported py ModelSerializer. Please, declare it manually")
+            if not serializer_field:
+                if enable_warnings:
+                    warnings.warn(
+                        f"Field {model_field} was declared in model, but it is not supported py ModelSerializer. Please, declare it manually")
                 continue
 
             if not isinstance(serializer_field, type) and callable(serializer_field):

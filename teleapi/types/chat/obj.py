@@ -7,14 +7,18 @@ from teleapi.core.utils.collections import exclude_from_dict
 from teleapi.enums.chat_action import ChatAction
 from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.user import User
+from .exceptions import BadChatType
 from .model import ChatModel
+from ..chat_member import ChatMember, ChatMemberObjectSerializer
 from ..chat_member.sub_objects.administrator import ChatAdministrator, ChatAdministratorSerializer
 from ..contact import Contact
+from ..input_media.sub_objects.audio import InputMediaAudio
+from ..input_media.sub_objects.document import InputMediaDocument
+from ..input_media.sub_objects.photo import InputMediaPhoto
+from ..input_media.sub_objects.video import InputMediaVideo
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
 from ...generics.http.methods.messages import *
-from ..chat_member import ChatMember, ChatMemberObjectSerializer
-from .exceptions import BadChatType
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -216,7 +220,7 @@ class Chat(ChatModel):
                            view: 'BaseInlineView' = None
                            ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_message
+        Alias for the teleapi.generics.http.methods.messages.send.send_message
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -243,7 +247,7 @@ class Chat(ChatModel):
                              'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None
                          ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_photo
+        Alias for the teleapi.generics.http.methods.messages.send.send_photo
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -273,7 +277,7 @@ class Chat(ChatModel):
                              'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None
                          ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_audio
+        Alias for the teleapi.generics.http.methods.messages.send.send_audio
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -301,7 +305,7 @@ class Chat(ChatModel):
                                 'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None
                             ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_document
+        Alias for the teleapi.generics.http.methods.messages.send.send_document
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -332,7 +336,7 @@ class Chat(ChatModel):
                              'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None
                          ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_video
+        Alias for the teleapi.generics.http.methods.messages.send.send_video
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -356,7 +360,7 @@ class Chat(ChatModel):
                               view: 'BaseInlineView' = None
                               ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_video_note
+        Alias for the teleapi.generics.http.methods.messages.send.send_video_note
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -388,7 +392,7 @@ class Chat(ChatModel):
                         view: 'BaseInlineView' = None
                         ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_poll
+        Alias for the teleapi.generics.http.methods.messages.send.send_poll
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -409,7 +413,7 @@ class Chat(ChatModel):
                            view: 'BaseInlineView' = None
                            ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_contact
+        Alias for the teleapi.generics.http.methods.messages.send.send_contact
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -430,7 +434,7 @@ class Chat(ChatModel):
                         view: 'BaseInlineView' = None
                         ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.send.send_dice
+        Alias for the teleapi.generics.http.methods.messages.send.send_dice
         """
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
@@ -439,6 +443,27 @@ class Chat(ChatModel):
         payload['chat_id'] = self.id
 
         return await send_dice(**payload)
+
+    async def send_media_group(self,
+                               media: List[Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
+                               disable_notification: bool = None,
+                               protect_content: bool = None,
+                               reply_to_message: Union[int, 'Message'] = None,
+                               allow_sending_without_reply: bool = None,
+                               reply_markup: Union[
+                                   'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                               view: 'BaseInlineView' = None
+                               ) -> 'Message':
+        """
+        Alias for the teleapi.generics.http.methods.messages.send.send_media_group
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
+        payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
+                                                                        int) or reply_to_message is None else reply_to_message.id
+        payload['chat_id'] = self.id
+
+        return await send_media_group(**payload)
 
     async def edit_message_text(self,
                                 text: str,
@@ -452,7 +477,7 @@ class Chat(ChatModel):
                                 view: 'BaseInlineView' = None
                                 ) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.edit.edit_message_text
+        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_text
         """
 
         payload = exclude_from_dict(locals(), 'self', 'message')
@@ -475,7 +500,7 @@ class Chat(ChatModel):
                                'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None
                            ) -> int:
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.forward.copy_message
+        Alias for the teleapi.generics.http.methods.messages.forward.copy_message
         """
 
         payload = exclude_from_dict(locals(), 'self', 'to_chat', 'message', 'reply_to_message')
@@ -493,7 +518,7 @@ class Chat(ChatModel):
                               disable_notification: bool = None,
                               protect_content: bool = None) -> 'Message':
         """
-        Abbreviation for the teleapi.generics.http.methods.messages.forward.forward_message
+        Alias for the teleapi.generics.http.methods.messages.forward.forward_message
         """
 
         payload = exclude_from_dict(locals(), 'self', 'to_chat', 'message', 'reply_to_message')

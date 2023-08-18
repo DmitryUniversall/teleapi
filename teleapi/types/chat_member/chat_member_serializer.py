@@ -36,4 +36,4 @@ class ChatMemberObjectSerializer(Serializer):
         if serializer is None:
             raise TypeError(f"Unknown ChatMember status: '{obj.status}'")
 
-        return serializer().to_representation(obj.status, keep_none_fields=keep_none_fields)
+        return serializer().to_representation(obj, keep_none_fields=keep_none_fields)

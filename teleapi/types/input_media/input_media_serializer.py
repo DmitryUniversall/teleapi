@@ -28,9 +28,9 @@ class InputMediaObjectSerializer(Serializer):
         return serializer().to_object(data)
 
     def to_representation(self, obj: Any, keep_none_fields: bool = True) -> JsonValue:
-        serializer = self.__class__.input_media_serializers_mapping.get(obj.status, None)
+        serializer = self.__class__.input_media_serializers_mapping.get(obj.type_, None)
 
         if serializer is None:
-            raise TypeError(f"Unknown InputMedia type_: '{obj.status}'")
+            raise TypeError(f"Unknown InputMedia type_: '{obj.type_}'")
 
-        return serializer().to_representation(obj.status, keep_none_fields=keep_none_fields)
+        return serializer().to_representation(obj, keep_none_fields=keep_none_fields)

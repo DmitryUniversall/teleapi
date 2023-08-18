@@ -4,7 +4,10 @@ from aiohttp import FormData
 
 
 def prepare_field(value: Any) -> str:
-    return value if isinstance(value, (str, bytes)) else json.dumps(value)
+    try:
+        return value if isinstance(value, (str, bytes)) else json.dumps(value)
+    except Exception as error:
+        raise ValueError(f"Unable to serialize {value}") from error
 
 
 def prepare_data(data: dict) -> dict:
