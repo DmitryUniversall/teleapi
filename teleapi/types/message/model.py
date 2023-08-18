@@ -13,6 +13,7 @@ from teleapi.types.user.obj import User
 from ..animation.obj import Animation
 from ..audio.obj import Audio
 from ..contact import Contact
+from ..dice.obj import Dice
 from ..document import Document
 from ..inline_keyboard_markup import InlineKeyboardMarkup
 from datetime import datetime
@@ -181,9 +182,9 @@ class MessageModel(Model):
     voice: Optional[Voice] = RelatedModelField(Voice, is_required=False)
     contact: Optional[Contact] = RelatedModelField(Contact, is_required=False)
     poll: Optional[Poll] = RelatedModelField(Poll, is_required=False)
+    dice: Optional[Dice] = RelatedModelField(Dice, is_required=False)
 
     # sticker: Optional[Sticker] = RelatedModelField(Sticker, is_required=False) TODO
-    # dice: Optional[Dice] = RelatedModelField(Dice, is_required=False)
     # game: Optional[Game] = RelatedModelField(Game, is_required=False)
     # location: Optional[Location] = RelatedModelField(Location, is_required=False)
     # web_app_data: Optional[WebAppData] = RelatedModelField(WebAppData, is_required=False)

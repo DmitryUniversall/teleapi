@@ -10,6 +10,7 @@ from teleapi.core.http.request.api_method import APIMethod
 from teleapi.core.http.request.api_request import method_request
 from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
 from teleapi.core.utils.files import get_file
+from teleapi.core.utils.syntax import default
 from teleapi.generics.http.methods.utils import make_data_form
 from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.contact import Contact, ContactSerializer
@@ -753,7 +754,7 @@ async def send_contact(contact: 'Contact', **kwargs) -> 'Message':
     """
     Send a contact to the specified chat.
 
-    :param contact: `str`
+    :param contact: `Contact`
         The contact to be sent
 
     :param kwargs: `dict`
@@ -775,4 +776,33 @@ async def send_contact(contact: 'Contact', **kwargs) -> 'Message':
         **exclude_from_dict(locals(), 'kwargs', 'contact'),
         **kwargs,
         **contact
+    )
+
+
+async def send_dice(emoji: str = None, **kwargs) -> 'Message':
+    """
+    Send the dice to the specified chat.
+
+    :param emoji: `str`
+        (Optional) Emoji on which the dice throw animation is based (see Dice model).
+        Defaults to `🎲`
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
+
+    :raises:
+        :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
+        :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data and serialization failed
+    """
+
+    emoji = default(emoji, '🎲')
+
+    return await send(
+        method=APIMethod.SEND_DICE,
+        **exclude_from_dict(locals(), 'kwargs'),
+        **kwargs
     )

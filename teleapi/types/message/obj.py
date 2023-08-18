@@ -181,6 +181,20 @@ class Message(MessageModel):
 
         return await self.chat.send_contact(**payload)
 
+    async def reply_dice(self,
+                         emoji: 'str' = None,
+                         disable_notification: bool = None,
+                         protect_content: bool = None,
+                         allow_sending_without_reply: bool = None,
+                         reply_markup: Union[
+                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                         view: 'BaseInlineView' = None
+                         ) -> 'Message':
+        payload = exclude_from_dict(locals(), 'self')
+        payload['reply_to_message'] = self
+
+        return await self.chat.send_dice(**payload)
+
     async def forward(self,
                       to_chat: Union['Chat', int, str],
                       message_thread_id: int = None,

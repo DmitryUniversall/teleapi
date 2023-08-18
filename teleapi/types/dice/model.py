@@ -3,5 +3,5 @@ from teleapi.core.orm.models.generics.fields import IntegerModelField, Selection
 
 
 class DiceModel(Model):
-    emoji: str = SelectionModelField(["🎲", "🎯", "🎳", "🏀", "⚽", "🎰"])
+    emoji: str = SelectionModelField(["🎲", "🎯", "🎳", "🏀", "⚽", "🎰"], default="🎲")
     value: int = IntegerModelField()

@@ -12,6 +12,7 @@ from teleapi.types.message_entity import MessageEntitySerializer
 from ..animation.serializer import AnimationSerializer
 from ..audio.serializer import AudioSerializer
 from ..contact import ContactSerializer
+from ..dice import DiceSerializer
 from ..document import DocumentSerializer
 from ..photo_size.serializer import PhotoSizeSerializer
 from ..poll import PollSerializer
@@ -46,6 +47,7 @@ class MessageSerializer(ModelSerializer):
     left_chat_member = RelatedSerializerField(UserSerializer(), is_required=False)
     contact = RelatedSerializerField(ContactSerializer(), is_required=False)
     poll = RelatedSerializerField(PollSerializer(), is_required=False)
+    dice = RelatedSerializerField(DiceSerializer(), is_required=False)
 
     class Meta:
         model = Message

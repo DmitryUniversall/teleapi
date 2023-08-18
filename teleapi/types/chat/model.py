@@ -5,7 +5,8 @@ from teleapi.core.orm.models.generics.fields import (
     StringModelField,
     BooleanModelField,
     ListModelField,
-    RelatedModelField
+    RelatedModelField,
+    SelectionModelField
 )
 
 if TYPE_CHECKING:
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 
 class ChatModel(Model):
     id: int = IntegerModelField()
-    type_: str = StringModelField()
+    type_: str = SelectionModelField(["private", "group", "supergroup", "channel"])
     is_forum: bool = BooleanModelField(is_required=False, default=False)
     has_private_forwards: bool = BooleanModelField(is_required=False, default=False)
     has_restricted_voice_and_video_messages: bool = BooleanModelField(is_required=False, default=False)

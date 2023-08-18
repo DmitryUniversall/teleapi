@@ -419,6 +419,27 @@ class Chat(ChatModel):
 
         return await send_contact(**payload)
 
+    async def send_dice(self,
+                        emoji: 'str' = None,
+                        disable_notification: bool = None,
+                        protect_content: bool = None,
+                        reply_to_message: Union[int, 'Message'] = None,
+                        allow_sending_without_reply: bool = None,
+                        reply_markup: Union[
+                            'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                        view: 'BaseInlineView' = None
+                        ) -> 'Message':
+        """
+        Abbreviation for the teleapi.generics.http.methods.messages.send.send_dice
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
+        payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
+                                                                        int) or reply_to_message is None else reply_to_message.id
+        payload['chat_id'] = self.id
+
+        return await send_dice(**payload)
+
     async def edit_message_text(self,
                                 text: str,
                                 message: Union[int, 'Message'],
