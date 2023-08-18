@@ -17,7 +17,7 @@ class ChatMemberUpdated(ChatMemberUpdatedModel):
             Returns True if the user was successfully banned
 
         :raises:
-            :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise ApiRequestError: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
             :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
@@ -34,7 +34,7 @@ class ChatMemberUpdated(ChatMemberUpdatedModel):
             Returns True if the user was successfully unbanned
 
         :raises:
-            :raise: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise ApiRequestError: ApiRequestError or any of its subclasses if the request sent to the Telegram Bot API fails.
             :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
