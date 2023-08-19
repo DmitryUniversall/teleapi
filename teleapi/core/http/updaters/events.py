@@ -9,6 +9,7 @@ class UpdateEvent(Enum):
     ON_BOT_CHAT_MEMBER_UPDATED = "on_bot_chat_member_updated"
     ON_POLL_STATUS_UPDATED = "on_poll_status_updated"
     ON_POLL_ANSWER = "on_poll_answer"
+    ON_CHAT_JOIN_REQUEST = "on_chat_join_request"
 
 
 class AllowedUpdates(Enum):

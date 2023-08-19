@@ -6,6 +6,7 @@ from teleapi.types.callback_query import CallbackQuerySerializer
 from teleapi.types.chat_member_updated import ChatMemberUpdatedSerializer
 from teleapi.types.poll import PollSerializer
 from teleapi.types.poll.sub_object.answer import PollAnswerSerializer
+from teleapi.types.chat_join_request import ChatJoinRequestSerializer
 
 
 class UpdateSerializer(ModelSerializer):
@@ -19,6 +20,7 @@ class UpdateSerializer(ModelSerializer):
     chat_member = RelatedSerializerField(ChatMemberUpdatedSerializer(), is_required=False)
     poll = RelatedSerializerField(PollSerializer(), is_required=False)
     poll_answer = RelatedSerializerField(PollAnswerSerializer(), is_required=False)
+    chat_join_request = RelatedSerializerField(ChatJoinRequestSerializer(), is_required=False)
 
     class Meta:
         model = Update

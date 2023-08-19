@@ -172,3 +172,7 @@ class Bot(BaseBot):
             asyncio.create_task(
                 self.call_event(update, UpdateEvent.ON_POLL_ANSWER, answer=update.poll_answer)
             )
+        if update.chat_join_request:
+            asyncio.create_task(
+                self.call_event(update, UpdateEvent.ON_CHAT_JOIN_REQUEST, answer=update.chat_join_request)
+            )
