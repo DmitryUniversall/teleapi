@@ -57,3 +57,7 @@ class APIMethod(Enum):
     BAN_CHAT_SENDER_CHAT = "banChatSenderChat"
     UNBAN_CHAT_SENDER_CHAT = "unbanChatSenderChat"
     CREATE_CHAT_INVITE_LINK = 'createChatInviteLink'
+    EDIT_CHAT_INVITE_LINK = 'editChatInviteLink'
+    REVOKE_CHAT_INVITE_LINK = 'revokeChatInviteLink'
+    APPROVE_CHAT_JOIN_REQUEST = "approveChatJoinRequest"
+    DECLINE_CHAT_JOIN_REQUEST = "declineChatJoinRequest"

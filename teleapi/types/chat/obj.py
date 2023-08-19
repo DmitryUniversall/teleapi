@@ -20,6 +20,7 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
 from ...generics.http.methods.messages import *
+from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
 from teleapi.types.chat_invite_link import ChatInviteLink, ChatInviteLinkSerializer
 
 if TYPE_CHECKING:
@@ -138,7 +139,7 @@ class Chat(ChatModel):
                               until_date: datetime = None
                               ) -> bool:
         """
-        Description
+        Restricts specified member
 
         :param user: `Union[int, User]`
             User to be restricted
@@ -286,15 +287,15 @@ class Chat(ChatModel):
 
         return bool(data['result'])
 
-    async def ban_sender_chat(self, sender_chat: Union[int, 'Chat']) -> bool:
+    async def ban_sender_chat(self, sender_chat: Union[int, str, 'Chat']) -> bool:
         """
         Bans a channel chat in a supergroup or a channel.
         Until the chat is unbanned, the owner of the banned chat won't be able to send
         messages on behalf of their channels. The bot must be an administrator in the supergroup
         or channel for this to work and must have the appropriate administrator rights
 
-        :param sender_chat: `Union[int, 'Chat']`
-            The sender_chat ID or Chat object of the chat to be banned.
+        :param sender_chat: `Union[int, str, 'Chat']`
+            The sender_chat ID, username or Chat object of the chat to be banned.
 
         :return: `bool`
             Returns True on success
@@ -313,13 +314,13 @@ class Chat(ChatModel):
 
         return bool(data['result'])
 
-    async def unban_sender_chat(self, sender_chat: Union[int, 'Chat']) -> bool:
+    async def unban_sender_chat(self, sender_chat: Union[int, str, 'Chat']) -> bool:
         """
         Unbans a previously banned channel chat in a supergroup or channel.
         The bot must be an administrator for this to work and must have the appropriate administrator rights.
 
-        :param sender_chat: `Union[int, 'Chat']`
-            The sender_chat ID or Chat object of the chat to be unbanned.
+        :param sender_chat: `Union[int, str, 'Chat']`
+            The sender_chat ID, username or Chat object of the chat to be unbanned.
 
         :return: `bool`
             Returns True on success
@@ -432,6 +433,7 @@ class Chat(ChatModel):
             :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
             :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
             :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+            :raise ValueError: If the provided name is more than 30 characters long
         """
 
         if len(name) > 30:
@@ -447,12 +449,127 @@ class Chat(ChatModel):
 
         return ChatInviteLinkSerializer().serialize(data=data)
 
+    async def edit_invite_link(self,
+                               invite_link: Union[str, 'ChatInviteLink'],
+                               name: str = None,
+                               expire_date: datetime = None,
+                               member_limit: int = None,
+                               creates_join_request: bool = None) -> 'ChatInviteLink':
+        """
+        Edit a non-primary invite link created by the bot.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights
+
+        :param invite_link: `Union[str, 'ChatInviteLink']`
+            The invite link to edit. Can be provided as string or ChatInviteLink object
+
+        :param name: `str`
+            Invite link name; 0-32 characters
+
+        :param expire_date: `datetime`
+            Point in time when the link will expire
+
+        :param member_limit: `int`
+            The maximum number of users that can be members of the chat
+            simultaneously after joining the chat via this invite link; 1-99999
+
+        :param creates_join_request: `bool`
+            True, if users joining the chat via the link need to be approved by chat administrators.
+            If True, member_limit can't be specified
+
+        :return: `ChatInviteLink`
+            Edited invite link
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+            :raise ValueError: If the provided name is more than 30 characters long
+        """
+
+        return await edit_invite_link(
+            chat_id=self.id,
+            invite_link=invite_link if isinstance(invite_link, (int, str)) else invite_link.invite_link,
+            **exclude_from_dict(locals(), 'self', 'invite_link')
+        )
+
+    async def revoke_invite_link(self, invite_link: Union[str, ChatInviteLink]) -> ChatInviteLink:
+        """
+        Revoke an invite link created by the bot.
+        If the primary link is revoked, a new link is automatically generated.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+
+        :param invite_link: `Union[str, ChatInviteLink]`
+            The invite link to revoke. Can be provided as string or ChatInviteLink object
+
+        :return: `ChatInviteLink`
+            The revoked invite link
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        return await revoke_chat_invite_link(
+            chat_id=self.id,
+            invite_link=invite_link if isinstance(invite_link, str) else invite_link.invite_link
+        )
+
+    async def approve_join_request(self, user: Union[int, 'User']) -> bool:
+        """
+        Approves a chat join request.
+        The bot must be an administrator in the chat for this to work and must have the can_invite_users administrator right.
+
+        :param user: `Union[int, 'User']`
+            The user ID or User object who sent the join request
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.APPROVE_CHAT_JOIN_REQUEST, data={
+            'chat_id': self.id,
+            'user_id': user if isinstance(user, int) else user.id,
+        })
+
+        return bool(data['result'])
+
+    async def decline_join_request(self, user: Union[int, 'User']) -> bool:
+        """
+        Declines a chat join request.
+        The bot must be an administrator in the chat for this to work and must have the can_invite_users administrator right.
+
+        :param user: `Union[int, 'User']`
+            The user ID or User object who sent the join request
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.DECLINE_CHAT_JOIN_REQUEST, data={
+            'chat_id': self.id,
+            'user_id': user if isinstance(user, int) else user.id,
+        })
+
+        return bool(data['result'])
+
     async def send_action(self, action: ChatAction, message_thread_id: int = None) -> bool:
         """
         Sends a chat action to indicate the current status of the bot in the chat.
 
         :param action: `ChatAction`
             The type of chat action to send, indicating the current status or action.
+
         :param message_thread_id: `int`
             (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
 
