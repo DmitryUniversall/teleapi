@@ -269,3 +269,22 @@ class Message(MessageModel):
         payload['reply_markup'] = default(reply_markup, self.reply_markup)
 
         return await self.chat.copy_message(**payload)
+
+    async def pin(self, disable_notification: bool = None) -> bool:
+        """
+        Adds a message to the list of pinned messages in a chat.
+        If the chat is not a private chat, the bot must be an administrator in the chat for this to work and
+        must have the 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages'
+        administrator right in a channel.
+
+        :param disable_notification: `bool`
+            (Optional) Sends the message silently. Users will receive a notification with no sound.
+
+        :return: `bool`
+            Returns true on success
+        """
+
+        return await self.chat.pin_message(
+            message=self,
+            disable_notification=disable_notification
+        )

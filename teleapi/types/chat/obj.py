@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Union, List
 
 from teleapi.core.http.request import method_request
 from teleapi.core.http.request.api_method import APIMethod
-from teleapi.core.utils.collections import exclude_from_dict
+from teleapi.core.utils.collections import exclude_from_dict, clear_none_values
 from teleapi.enums.chat_action import ChatAction
 from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.user import User
@@ -49,10 +49,6 @@ class Chat(ChatModel):
 
         :return: 'Chat'
             An instance of the 'Chat' class.
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         from teleapi.types.chat.serializer import ChatSerializer
@@ -69,10 +65,6 @@ class Chat(ChatModel):
 
         :return: 'ChatMember'
             An instance of the 'ChatMember' class, or any of its subclasses (sub_objects).
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         response, data = await method_request("GET", APIMethod.GET_CHAT_MEMBER, data={
@@ -90,11 +82,8 @@ class Chat(ChatModel):
 
         Notes:
          - If your bot is administrator - it will also be returned
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
+
         if self.type_ == 'private':  # TODO: Chat type enum
             raise BadChatType("There are no administrators in the private chat")
 
@@ -107,10 +96,6 @@ class Chat(ChatModel):
 
         :return: 'int'
             The count of members in the chat.
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         if self.type_ == 'private':
@@ -125,10 +110,6 @@ class Chat(ChatModel):
 
         :return: 'bool'
             Returns True on success.
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         response, data = await method_request("GET", APIMethod.LEAVE_CHAT, data={'chat_id': self.id})
@@ -151,24 +132,19 @@ class Chat(ChatModel):
             New user permissions
 
         :param use_independent_chat_permissions: `bool`
-            Pass True if chat permissions are set independently.
+            (Optional) Pass True if chat permissions are set independently.
             Otherwise, the can_send_other_messages and can_add_web_page_previews permissions
             will imply the can_send_messages, can_send_audios, can_send_documents,
             can_send_photos, can_send_videos, can_send_video_notes, and can_send_voice_notes permissions;
             the can_send_polls permission will imply the can_send_messages permission.
 
         :param until_date: `datetime`
-            Date when restrictions will be lifted for the user, unix time.
+            (Optional) Date when restrictions will be lifted for the user, unix time.
             If user is restricted for more than 366 days or less than 30 seconds from the current time,
             they are considered to be restricted forever
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.RESTRICT_CHAT_MEMBER, data={
@@ -244,11 +220,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True if the member was successfully promoted
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.PROMOTE_CHAT_MEMBER, data={
@@ -274,9 +245,6 @@ class Chat(ChatModel):
 
         :raises:
             :raise ValueError: if custom_title is longer than 16 characters
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         if len(custom_title) > 16:
@@ -302,11 +270,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.BAN_CHAT_SENDER_CHAT, data={
@@ -327,11 +290,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.UNBAN_CHAT_SENDER_CHAT, data={
@@ -354,7 +312,7 @@ class Chat(ChatModel):
             New default chat permissions
 
         :param use_independent_chat_permissions: `bool`
-            Pass True if chat permissions are set independently.
+            (Optional) Pass True if chat permissions are set independently.
             Otherwise, the can_send_other_messages and can_add_web_page_previews permissions
             will imply the can_send_messages, can_send_audios, can_send_documents,
             can_send_photos, can_send_videos, can_send_video_notes, and can_send_voice_notes permissions;
@@ -362,11 +320,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.SET_CHAT_PERMISSIONS, data={
@@ -392,11 +345,6 @@ class Chat(ChatModel):
          If you want your bot to work with invite links, it will need to generate its own link
          using exportChatInviteLink or by calling the getChat method.
          If your bot needs to generate a new primary invite link replacing its previous one, use exportChatInviteLink again.
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.EXPORT_CHAT_INVITE_LINK, data={
@@ -416,26 +364,23 @@ class Chat(ChatModel):
         The link can be revoked using the method revokeChatInviteLink.
 
         :param name: `str`
-            Invite link name; 0-32 characters
+            (Optional) Invite link name; 0-32 characters
 
         :param expire_date: `datetime`
-            Point in time when the link will expire
+            (Optional) Point in time when the link will expire
 
         :param member_limit: `int`
-            The maximum number of users that can be members of the chat
+            (Optional) The maximum number of users that can be members of the chat
             simultaneously after joining the chat via this invite link; 1-99999
 
         :param creates_join_request: `bool`
-            True, if users joining the chat via the link need to be approved by chat administrators.
+            (Optional) True, if users joining the chat via the link need to be approved by chat administrators.
             If True, member_limit can't be specified
 
         :return: `ChatInviteLink`
             New invite link
 
         :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
             :raise ValueError: If the provided name is more than 30 characters long
         """
 
@@ -466,26 +411,23 @@ class Chat(ChatModel):
             The invite link to edit. Can be provided as string or ChatInviteLink object
 
         :param name: `str`
-            Invite link name; 0-32 characters
+            (Optional) Invite link name; 0-32 characters
 
         :param expire_date: `datetime`
-            Point in time when the link will expire
+            (Optional) Point in time when the link will expire
 
         :param member_limit: `int`
-            The maximum number of users that can be members of the chat
+            (Optional) The maximum number of users that can be members of the chat
             simultaneously after joining the chat via this invite link; 1-99999
 
         :param creates_join_request: `bool`
-            True, if users joining the chat via the link need to be approved by chat administrators.
+            (Optional) True, if users joining the chat via the link need to be approved by chat administrators.
             If True, member_limit can't be specified
 
         :return: `ChatInviteLink`
             Edited invite link
 
         :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
             :raise ValueError: If the provided name is more than 30 characters long
         """
 
@@ -506,11 +448,6 @@ class Chat(ChatModel):
 
         :return: `ChatInviteLink`
             The revoked invite link
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         return await revoke_chat_invite_link(
@@ -528,11 +465,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.APPROVE_CHAT_JOIN_REQUEST, data={
@@ -552,11 +484,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.DECLINE_CHAT_JOIN_REQUEST, data={
@@ -578,9 +505,6 @@ class Chat(ChatModel):
             Returns True on success
 
         :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
             :raise FileNotFoundError: If photo is path and file was not found
         """
 
@@ -606,11 +530,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
         """
 
         response, data = await method_request("post", APIMethod.DELETE_CHAT_PHOTO, data={
@@ -621,7 +540,7 @@ class Chat(ChatModel):
 
     async def set_title(self, title: str) -> bool:
         """
-        Deletes a chat photo. Photos can't be changed for private chats.
+        Sets the title of a chat. Titles can't be changed for private chats.
         The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
 
         :param title: `str`
@@ -631,9 +550,6 @@ class Chat(ChatModel):
             Returns True on success
 
         :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
             :raise ValueError: If the provided title is less than 1 or more than 128 characters long
         """
 
@@ -642,9 +558,58 @@ class Chat(ChatModel):
         if len(title) == 0:
             raise ValueError("At least 1 character must be in chat title")
 
-        response, data = await method_request("post", APIMethod.DELETE_CHAT_PHOTO, data={
+        response, data = await method_request("post", APIMethod.SET_CHAT_TITLE, data={
             'chat_id', self.id
         })
+
+        return bool(data['result'])
+
+    async def set_description(self, description: str) -> bool:
+        """
+        Sets the description of a group, a supergroup or a channel.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+
+        :param description: `str`
+            New chat description, 0-255 characters
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ValueError: If the provided description is more than 255 characters long
+        """
+
+        if len(description) > 255:
+            raise ValueError("Chat description must be less than 255 characters long")
+
+        response, data = await method_request("post", APIMethod.SET_CHAT_DESCRIPTION, data={
+            'chat_id', self.id
+        })
+
+        return bool(data['result'])
+
+    async def pin_message(self, message: Union[int, 'Message'], disable_notification: bool = None) -> bool:
+        """
+        Adds a message to the list of pinned messages in a chat.
+        If the chat is not a private chat, the bot must be an administrator in the chat for this to work and
+        must have the 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages'
+        administrator right in a channel.
+
+        :param message: `Union[int, 'Message']`
+            Message ID or Message object to be pinned
+
+        :param disable_notification: `bool`
+            (Optional) Sends the message silently. Users will receive a notification with no sound.
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        response, data = await method_request("post", APIMethod.PIN_CHAT_MESSAGE, data=clear_none_values({
+            'chat_id': self.id,
+            'message_id': message if isinstance(message, int) else message.id,
+            'disable_notification':disable_notification
+        }))
 
         return bool(data['result'])
 
@@ -664,10 +629,6 @@ class Chat(ChatModel):
         Notes:
          - Status is shown for 5 seconds or less (when a message arrives from your bot,
          Telegram clients clear its typing status)
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         payload = exclude_from_dict(locals(), 'self')
@@ -691,10 +652,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True if the user was successfully banned
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         payload = exclude_from_dict(locals(), 'self')
@@ -716,10 +673,6 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True if the user was successfully unbanned
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         """
 
         payload = exclude_from_dict(locals(), 'self')
