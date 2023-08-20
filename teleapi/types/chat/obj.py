@@ -613,6 +613,44 @@ class Chat(ChatModel):
 
         return bool(data['result'])
 
+    async def unpin_message(self, message: Union[int, 'Message']) -> bool:
+        """
+        Removes a message from the list of pinned messages in a chat.
+        If the chat is not a private chat, the bot must be an administrator in the chat for this to work and
+        must have the 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages'
+        administrator right in a channel.
+
+        :param message: `Union[int, 'Message']`
+            Message ID or Message object to be pinned
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        response, data = await method_request("post", APIMethod.UNPIN_CHAT_MESSAGE, data=clear_none_values({
+            'chat_id': self.id,
+            'message_id': message if isinstance(message, int) else message.id
+        }))
+
+        return bool(data['result'])
+
+    async def unpin_all_messages(self) -> bool:
+        """
+        Clears the list of pinned messages in a chat.
+        If the chat is not a private chat, the bot must be an administrator in the chat for this to work and
+        must have the 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages'
+        administrator right in a channel.
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        response, data = await method_request("post", APIMethod.UNPIN_ALL_CHAT_MESSAGES, data={
+            'chat_id': self.id,
+        })
+
+        return bool(data['result'])
+
     async def send_action(self, action: ChatAction, message_thread_id: int = None) -> bool:
         """
         Sends a chat action to indicate the current status of the bot in the chat.

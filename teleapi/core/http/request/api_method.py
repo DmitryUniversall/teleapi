@@ -38,6 +38,7 @@ class APIMethod(Enum):
     SET_CHAT_DESCRIPTION = "setChatDescription"
     PIN_CHAT_MESSAGE = "pinChatMessage"
     UNPIN_CHAT_MESSAGE = "unpinChatMessage"
+    UNPIN_ALL_CHAT_MESSAGES = "unpinAllChatMessages"
     LEAVE_CHAT = "leaveChat"
     GET_CHAT = "getChat"
     GET_CHAT_ADMINISTRATORS = "getChatAdministrators"
