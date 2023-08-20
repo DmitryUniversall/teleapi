@@ -1,3 +1,4 @@
+import os.path
 from datetime import datetime
 from typing import TYPE_CHECKING, Union, List
 
@@ -19,9 +20,11 @@ from ..input_media.sub_objects.photo import InputMediaPhoto
 from ..input_media.sub_objects.video import InputMediaVideo
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
+from ...core.utils.files import get_file
 from ...generics.http.methods.messages import *
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
 from teleapi.types.chat_invite_link import ChatInviteLink, ChatInviteLinkSerializer
+from aiohttp import FormData
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -559,6 +562,88 @@ class Chat(ChatModel):
         response, data = await method_request("post", APIMethod.DECLINE_CHAT_JOIN_REQUEST, data={
             'chat_id': self.id,
             'user_id': user if isinstance(user, int) else user.id,
+        })
+
+        return bool(data['result'])
+
+    async def set_photo(self, photo: Union[str, bytes]) -> bool:
+        """
+        Sets a new profile photo for the chat. Photos can't be changed for private chats.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+
+        :param photo: `Union[str, bytes]`
+            New chat photo
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+            :raise FileNotFoundError: If photo is path and file was not found
+        """
+
+        filename = None
+        if isinstance(photo, str):
+            if not os.path.exists(photo):
+                raise FileNotFoundError(f"Photo file {photo} was not found")
+
+            filename, photo = get_file(photo)
+
+        form_data = FormData()
+        form_data.add_field('chat_id', self.id)
+        form_data.add_field('photo', photo, filename=filename)
+
+        response, data = await method_request("post", APIMethod.SET_CHAT_PHOTO, data=form_data)
+
+        return bool(data['result'])
+
+    async def delete_photo(self) -> bool:
+        """
+        Deletes a chat photo. Photos can't be changed for private chats.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        """
+
+        response, data = await method_request("post", APIMethod.DELETE_CHAT_PHOTO, data={
+            'chat_id', self.id
+        })
+
+        return bool(data['result'])
+
+    async def set_title(self, title: str) -> bool:
+        """
+        Deletes a chat photo. Photos can't be changed for private chats.
+        The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
+
+        :param title: `str`
+            New chat title, 1-128 characters
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
+            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+            :raise ValueError: If the provided title is less than 1 or more than 128 characters long
+        """
+
+        if len(title) > 128:
+            raise ValueError("Chat title must be less than 128 characters long")
+        if len(title) == 0:
+            raise ValueError("At least 1 character must be in chat title")
+
+        response, data = await method_request("post", APIMethod.DELETE_CHAT_PHOTO, data={
+            'chat_id', self.id
         })
 
         return bool(data['result'])
