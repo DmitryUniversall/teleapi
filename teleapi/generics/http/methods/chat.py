@@ -51,14 +51,14 @@ async def edit_invite_link(chat_id: Union[int, str],
     if len(name) > 30:
         raise ValueError("Link name must be less than 30 characters long")
 
-    expire_date = expire_date.timestamp()
+    expire_date = expire_date.timestamp() if expire_date is not None else None
 
     response, data = await method_request("post", APIMethod.EDIT_CHAT_INVITE_LINK, data=locals())
 
     return ChatInviteLinkSerializer().serialize(data=data)
 
 
-async def revoke_chat_invite_link(chat_id: Union[int, str], invite_link: str) -> ChatInviteLink:
+async def revoke_chat_invite_link(chat_id: Union[int, str], invite_link: str) -> 'ChatInviteLink':
     """
     Revoke an invite link created by the bot.
     If the primary link is revoked, a new link is automatically generated.

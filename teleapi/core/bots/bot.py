@@ -151,7 +151,10 @@ class Bot(BaseBot):
             asyncio.create_task(
                 self.call_event(update, UpdateEvent.ON_MESSAGE, message=update.message)
             )
-
+        if update.channel_post:
+            asyncio.create_task(
+                self.call_event(update, UpdateEvent.ON_CHANNEL_POST, post=update.channel_post)
+            )
         if update.callback_query:
             asyncio.create_task(
                 self.call_event(update, UpdateEvent.ON_CALLBACK_QUERY, callback_query=update.callback_query)

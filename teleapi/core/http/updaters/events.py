@@ -3,6 +3,7 @@ from enum import Enum
 
 class UpdateEvent(Enum):
     ON_MESSAGE = "on_message"
+    ON_CHANNEL_POST = 'ON_CHANNEL_POST'
     ON_COMMAND = "on_command"
     ON_CALLBACK_QUERY = "on_callback_query"
     ON_CHAT_MEMBER_UPDATED = "on_chat_member_updated"

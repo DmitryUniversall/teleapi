@@ -20,6 +20,7 @@ from ..input_media.sub_objects.photo import InputMediaPhoto
 from ..input_media.sub_objects.video import InputMediaVideo
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
+from ...core.exceptions.generics import ParameterConflict
 from ...core.utils.files import get_file
 from ...generics.http.methods.messages import *
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
@@ -152,7 +153,7 @@ class Chat(ChatModel):
             'user_id': user if isinstance(user, int) else user.id,
             'permissions': ChatPermissionsSerializer().serialize(obj=permissions),
             'use_independent_chat_permissions': use_independent_chat_permissions,
-            'until_date': until_date.timestamp()
+            'until_date': until_date.timestamp() if until_date is not None else None
         })
 
         return bool(data['result'])
@@ -386,16 +387,18 @@ class Chat(ChatModel):
 
         if len(name) > 30:
             raise ValueError("Link name must be less than 30 characters long")
+        elif member_limit is not None and creates_join_request:
+            raise ParameterConflict("Member limit can't be specified for links requiring administrator approval")
 
-        response, data = await method_request("post", APIMethod.CREATE_CHAT_INVITE_LINK, data={
+        response, data = await method_request("post", APIMethod.CREATE_CHAT_INVITE_LINK, data=clear_none_values({
             'chat_id': self.id,
             'name': name,
-            'expire_date': expire_date.timestamp(),
+            'expire_date': expire_date.timestamp() if expire_date is not None else None,
             'member_limit': member_limit,
             'creates_join_request': creates_join_request
-        })
+        }))
 
-        return ChatInviteLinkSerializer().serialize(data=data)
+        return ChatInviteLinkSerializer().serialize(data=data['result'])
 
     async def edit_invite_link(self,
                                invite_link: Union[str, 'ChatInviteLink'],
@@ -693,7 +696,7 @@ class Chat(ChatModel):
         """
 
         payload = exclude_from_dict(locals(), 'self')
-        payload['until_date'] = until_date.timestamp()
+        payload['until_date'] = until_date.timestamp() if until_date is not None else None
         payload['chat_id'] = self.id
         payload['user_id'] = user if isinstance(user, int) else user.id
 
