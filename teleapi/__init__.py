@@ -12,6 +12,7 @@ from .core.http.request import APIMethod, AsyncMethodApiRequest, AsyncFileApiReq
 from teleapi.generics.http.updaters.long_polling import LongPollingUpdater
 from teleapi.enums.chat_action import ChatAction
 from teleapi.enums.parse_mode import ParseMode
+from .core.state import project_settings
 import logging
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
