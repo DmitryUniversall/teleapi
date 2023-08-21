@@ -1,6 +1,7 @@
 from teleapi.core.orm.validators.abc import Validateable
 from teleapi.core.orm.typing import JsonValue
 from .sized import SizedValidator
+from teleapi.core.orm.validators import ValidationError
 
 
 class ListValidator(SizedValidator):
@@ -13,4 +14,7 @@ class ListValidator(SizedValidator):
         if value is None:
             return
 
-        return [self.validator.validate(element) for element in value]
+        try:
+            return [self.validator.validate(element) for element in value]
+        except ValidationError as error:
+            raise ValidationError(f"One of list elements of {self} has not passed validation: {error}") from error

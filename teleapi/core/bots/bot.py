@@ -21,17 +21,17 @@ class BaseBot(ABC):
     __bot_executors__: List[Type[BaseExecutor]] = []
 
     def __init__(self, updater_cls: Type[BaseUpdater], error_manager: BaseErrorManager = None, allowed_updates: List[AllowedUpdates] = None) -> None:
+        self._is_initialized = False
+        self.me = None
+        self.error_manager = default(error_manager, ErrorManager())
+        self.updater = updater_cls(bot=self, allowed_updates=allowed_updates)
+
         self.__middlewares: List[BaseMiddleware] = [
             middleware_cls(self) for middleware_cls in (project_settings.get('MIDDLEWARES', []) + self.__class__.__bot_middlewares__)
         ]
         self._executors: List[BaseExecutor] = [
             executor_cls(self) for executor_cls in (project_settings.get('EXECUTORS', []) + self.__class__.__bot_executors__)
         ]
-
-        self._is_initialized = False
-        self.me = None
-        self.error_manager = default(error_manager, ErrorManager())
-        self.updater = updater_cls(bot=self, allowed_updates=allowed_updates)
 
     @abstractmethod
     async def dispatch(self, update: Update) -> None:
@@ -89,7 +89,7 @@ class BaseBot(ABC):
         logger.debug(f"Unregistered middleware {middleware}")
 
     async def call_event(self, update: Update, event_type: UpdateEvent, **kwargs) -> None:
-        logger.info(f"Calling event {event_type} on update {update.id}")
+        logger.debug(f"Calling event {event_type} on update {update.id}")
 
         tasks = [executor.call_event(update, event_type, **kwargs) for executor in self._executors]
 
