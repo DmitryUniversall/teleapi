@@ -7,7 +7,7 @@ file_log_formatter = FileLogFormatter()
 console_log_formatter = ConsoleLogFormatter()
 
 
-def setup_logger(name: str, logs_dir: str = None, console_log_level: int = logging.DEBUG) -> logging.Logger:
+def setup_logger(name: str, logs_dir: str = None, console_log_level: int = None) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
@@ -25,11 +25,11 @@ def setup_logger(name: str, logs_dir: str = None, console_log_level: int = loggi
         logger.addHandler(info_file_handler)
         logger.addHandler(debug_file_handler)
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(console_log_formatter)
-    console_handler.setLevel(console_log_level)
-
-    logger.addHandler(console_handler)
+    if console_log_level is not None:
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(console_log_formatter)
+        console_handler.setLevel(console_log_level)
+        logger.addHandler(console_handler)
 
     return logger
 
