@@ -43,12 +43,9 @@ class TypedValidator(Validator):
         if value is None:
             return
 
-        try:
-            if not isinstance(value, self.type_):
-                raise ValidationError(
-                    f"Value of validator {self} must be of type {self.type_}, not {type(value)} (got {value})"
-                )
-        except Exception as error:
-            print(error)
+        if not isinstance(value, self.type_):
+            raise ValidationError(
+                f"Value of validator {self} must be of type {self.type_}, not {type(value)} (got {value})"
+            )
 
         return value

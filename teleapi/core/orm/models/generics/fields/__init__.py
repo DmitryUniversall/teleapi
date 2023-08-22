@@ -4,3 +4,4 @@ from .base_types import IntegerModelField, StringModelField, BooleanModelField, 
 from .const import ConstantModelField
 from .selection import SelectionModelField
 from .input_file import InputFileModelField
+from .any_type import AnyTypeModelField

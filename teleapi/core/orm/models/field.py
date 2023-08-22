@@ -1,11 +1,11 @@
 from abc import ABC
 from typing import Any, Optional
 
-from teleapi.core.orm.field import Field
+from teleapi.core.orm.field_mixin import FieldMixin
 from teleapi.core.orm.validators.validator import BaseValidator
 
 
-class BaseModelField(BaseValidator, Field, ABC):
+class BaseModelField(FieldMixin, BaseValidator, ABC):
     def __set__(self, instance: Any, value: Any) -> None:
         validated = self.validate(value)
         instance.__dict__[self.__attribute_name__] = validated
