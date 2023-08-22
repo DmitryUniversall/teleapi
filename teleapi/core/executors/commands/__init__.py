@@ -1,1 +1,1 @@
-from .command import CommandMeta, BaseCommand, Command, command
+from .command import BaseCommand, Command, command

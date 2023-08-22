@@ -195,9 +195,7 @@ class Executor(BaseExecutor):
             return
 
         try:
-            parsed, not_parsed = await command.parse_parameters(message.text.split(" ")[1:])
-
-            await command.invoke(message, parameters=parsed, unknown_parameters=not_parsed)
+            await command.invoke(message)
         except BaseException as error:
             await self.error_manager.process_error(error, update)
 

@@ -4,7 +4,6 @@ from teleapi.types import *
 from teleapi.core.executors import Executor
 from teleapi.core.executors.events import EventListener, event
 from teleapi.core.executors.commands import Command, command
-from teleapi.core.executors.commands.params import CommandParameter
 from teleapi.core.exceptions import TeleapiError
 from teleapi.core import orm
 from .core.http.updaters import UpdateEvent, AllowedUpdates, AllowedUpdates_all, AllowedUpdates_default, BaseUpdater

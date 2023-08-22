@@ -724,7 +724,13 @@ async def send_poll(question: str,  # TODO: Errors (options length, ...)
 
     :return: `Message`
         The sent message object.
+
+    :raises:
+        :raise ValueError: If poll type is quiz and correct_option_id was not specified
     """
+
+    if type_ == PollType.QUIZ and correct_option_id is None:
+        raise ValueError
 
     explanation_parse_mode = explanation_parse_mode.value
     explanation_entities = MessageEntitySerializer().serialize(
