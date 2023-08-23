@@ -227,9 +227,8 @@ class Message(MessageModel):
 
         return await self.chat.forward_message(**payload)
 
-    async def edit_text(self,
+    async def edit_text(self,  # TODO: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message (400)
                         text: str,
-                        inline_message_id: int = None,
                         parse_mode: ParseMode = ParseMode.NONE,
                         disable_web_page_preview: bool = None,
                         reply_markup: Union[
@@ -248,7 +247,63 @@ class Message(MessageModel):
         payload = exclude_from_dict(locals(), 'self', 'keep_reply_markup')
         payload['message'] = self
 
-        return await self.chat.edit_message_text(**payload)
+        result = await self.chat.edit_message_text(**payload)
+
+        self.text = text  # TODO: Нужно ли?
+        self.reply_markup = reply_markup
+        self.entities = entities
+
+        return result
+
+    async def edit_caption(self,
+                           caption: str,
+                           parse_mode: ParseMode = ParseMode.NONE,
+                           caption_entities: List['MessageEntity'] = None,
+                           reply_markup: Union[
+                               'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                           view: 'BaseInlineView' = None
+                           ) -> Union['Message', bool]:
+
+        payload = exclude_from_dict(locals(), 'self')
+        payload['message'] = self
+
+        result = await self.chat.edit_message_caption(**payload)
+
+        self.caption = caption
+        self.caption_entities = caption_entities
+
+        return result
+
+    async def edit_media(self,
+                         media: Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo],
+                         reply_markup: Union[
+                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                         view: 'BaseInlineView' = None
+                         ) -> Union['Message', bool]:
+
+        payload = exclude_from_dict(locals(), 'self')
+        payload['message'] = self
+
+        result = await self.chat.edit_message_media(**payload)
+
+        # TODO: Edit this message object
+
+        return result
+
+    async def edit_reply_markup(self,
+                                reply_markup: Union[
+                                    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                view: 'BaseInlineView' = None
+                                ) -> Union['Message', bool]:
+
+        payload = exclude_from_dict(locals(), 'self')
+        payload['message'] = self
+
+        result = await self.chat.edit_message_reply_markup(**payload)
+
+        self.reply_markup = reply_markup
+
+        return result
 
     async def copy(self,
                    to_chat: Union['Chat', int, str],
@@ -332,6 +387,7 @@ class Message(MessageModel):
         if message_time_delta > timedelta(hours=48):
             raise MessageTooOld("A message can only be deleted if it was sent less than 48 hours ago.")
         elif self.dice is not None and self.chat.type_ == ChatType.PRIVATE and message_time_delta < timedelta(hours=24):
-            raise MessageTooNew("A dice message in a private chat can only be deleted if it was sent more than 24 hours ago.")
+            raise MessageTooNew(
+                "A dice message in a private chat can only be deleted if it was sent more than 24 hours ago.")
 
         return await self.chat.delete_message(message=self)

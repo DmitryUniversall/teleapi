@@ -611,7 +611,7 @@ class Chat(ChatModel):
         response, data = await method_request("post", APIMethod.PIN_CHAT_MESSAGE, data=clear_none_values({
             'chat_id': self.id,
             'message_id': message if isinstance(message, int) else message.id,
-            'disable_notification':disable_notification
+            'disable_notification': disable_notification
         }))
 
         return bool(data['result'])
@@ -984,27 +984,6 @@ class Chat(ChatModel):
 
         return await send_media_group(**payload)
 
-    async def edit_message_text(self,
-                                text: str,
-                                message: Union[int, 'Message'],
-                                inline_message_id: int = None,
-                                parse_mode: ParseMode = ParseMode.NONE,
-                                disable_web_page_preview: bool = None,
-                                reply_markup: Union[
-                                    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                                entities: List[MessageEntity] = None,
-                                view: 'BaseInlineView' = None
-                                ) -> 'Message':
-        """
-        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_text
-        """
-
-        payload = exclude_from_dict(locals(), 'self', 'message')
-        payload['chat_id'] = self.id
-        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
-
-        return await edit_message_text(**payload)
-
     async def copy_message(self,
                            to_chat: Union['Chat', int, str],
                            message: Union['Message', int],
@@ -1073,3 +1052,79 @@ class Chat(ChatModel):
         })
 
         return bool(data['result'])
+
+    async def edit_message_text(self,
+                                text: str,
+                                message: Union[int, 'Message'] = None,
+                                inline_message_id: str = None,
+                                parse_mode: ParseMode = ParseMode.NONE,
+                                disable_web_page_preview: bool = None,
+                                reply_markup: Union[
+                                    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                entities: List[MessageEntity] = None,
+                                view: 'BaseInlineView' = None
+                                ) -> 'Message':
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_text
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await edit_message_text(**payload)
+
+    async def edit_message_caption(self,
+                                   caption: str,
+                                   message: Union[int, 'Message'] = None,
+                                   inline_message_id: str = None,
+                                   parse_mode: ParseMode = ParseMode.NONE,
+                                   reply_markup: Union[
+                                       'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                   caption_entities: List[MessageEntity] = None,
+                                   view: 'BaseInlineView' = None
+                                   ) -> Union['Message', bool]:
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_caption
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await edit_message_caption(**payload)
+
+    async def edit_message_media(self,
+                                 media: Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo],
+                                 message: Union[int, 'Message'] = None,
+                                 inline_message_id: str = None,
+                                 reply_markup: Union[
+                                     'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                 view: 'BaseInlineView' = None
+                                 ) -> Union['Message', bool]:
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_media
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await edit_message_media(**payload)
+
+    async def edit_message_reply_markup(self,
+                                        message: Union[int, 'Message'] = None,
+                                        inline_message_id: str = None,
+                                        reply_markup: Union[
+                                            'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                        view: 'BaseInlineView' = None
+                                        ) -> Union['Message', bool]:
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_reply_markup
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await edit_message_reply_markup(**payload)

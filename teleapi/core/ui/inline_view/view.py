@@ -75,6 +75,9 @@ class BaseInlineView(metaclass=InlineViewMeta):
         if button is not None:
             await button.on_click(callback_query)
 
+        if not callback_query.is_answered:
+            await callback_query.answer()
+
 
 class View(BaseInlineView):
     pass

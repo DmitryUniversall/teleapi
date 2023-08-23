@@ -109,6 +109,8 @@ async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach
     if view:
         if isinstance(message, list):
             view.message = message[-1]
+        else:
+            view.message = message
 
     return message
 

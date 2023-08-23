@@ -18,4 +18,7 @@ class CallbackQuery(CallbackQueryModel):
         })
 
         response, data = await method_request("POST", APIMethod.ANSWER_CALLBACK_QUERY, data=request_data)
+
+        self.is_answered = True
+
         return bool(data)

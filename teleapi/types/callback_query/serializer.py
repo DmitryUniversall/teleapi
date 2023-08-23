@@ -11,3 +11,4 @@ class CallbackQuerySerializer(ModelSerializer):
 
     class Meta:
         model = CallbackQuery
+        exclude = ('is_answered',)
