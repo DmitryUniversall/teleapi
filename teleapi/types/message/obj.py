@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Union, List
 
 from .model import MessageModel
@@ -12,6 +12,8 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..poll.sub_object import PollType
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
+from .exceptions import MessageTooOld, MessageTooNew
+from ..chat.chat_type import ChatType
 
 if TYPE_CHECKING:
     from ..inline_keyboard_markup import InlineKeyboardMarkup
@@ -303,3 +305,33 @@ class Message(MessageModel):
         return await self.chat.unpin_message(
             message=self,
         )
+
+    async def delete(self) -> bool:
+        """
+        Deletes this message
+
+        :return: `bool`
+            Returns True on success
+
+        :raises:
+            :raise MessageTooOld: if message is too old to be deleted (see Notes)
+
+        Notes:
+         - A message can only be deleted if it was sent less than 48 hours ago.
+         - A dice message in a private chat can only be deleted if it was sent more than 24 hours ago.
+         - Service messages about a supergroup, channel, or forum topic creation can't be deleted.
+         - Bots can delete outgoing messages in private chats, groups, and supergroups.
+         - Bots can delete incoming messages in private chats.
+         - Bots granted can_post_messages permissions can delete outgoing messages in channels.
+         - If the bot is an administrator of a group, it can delete any message there.
+         - If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there.
+        """
+
+        message_time_delta = datetime.now() - self.date
+
+        if message_time_delta > timedelta(hours=48):
+            raise MessageTooOld("A message can only be deleted if it was sent less than 48 hours ago.")
+        elif self.dice is not None and self.chat.type_ == ChatType.PRIVATE and message_time_delta < timedelta(hours=24):
+            raise MessageTooNew("A dice message in a private chat can only be deleted if it was sent more than 24 hours ago.")
+
+        return await self.chat.delete_message(message=self)

@@ -9,7 +9,7 @@ from teleapi.core import orm
 from .core.http.updaters import UpdateEvent, AllowedUpdates, AllowedUpdates_all, AllowedUpdates_default, BaseUpdater
 from .core.http.request import APIMethod, AsyncMethodApiRequest, AsyncFileApiRequest, AsyncApiRequest, method_request, file_request
 from teleapi.generics.http.updaters.long_polling import LongPollingUpdater
-from teleapi.enums.chat_action import ChatAction
+from teleapi.types.chat.chat_action import ChatAction
 from teleapi.enums.parse_mode import ParseMode
 from .core.state import project_settings
 import logging

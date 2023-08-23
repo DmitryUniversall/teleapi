@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Union, List
 from teleapi.core.http.request import method_request
 from teleapi.core.http.request.api_method import APIMethod
 from teleapi.core.utils.collections import exclude_from_dict, clear_none_values
-from teleapi.enums.chat_action import ChatAction
+from teleapi.types.chat.chat_action import ChatAction
 from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.user import User
 from .exceptions import BadChatType
@@ -677,7 +677,7 @@ class Chat(ChatModel):
         payload['action'] = action.value
 
         response, data = await method_request("POST", APIMethod.SEND_CHAT_ACTION, data=payload)
-        return bool(data)
+        return bool(data['result'])
 
     async def ban_member(self, user: Union[int, User], until_date: datetime = None,
                          revoke_messages: bool = None) -> bool:
@@ -701,7 +701,7 @@ class Chat(ChatModel):
         payload['user_id'] = user if isinstance(user, int) else user.id
 
         response, data = await method_request("POST", APIMethod.BAN_CHAT_MEMBER, data=payload)
-        return bool(data)
+        return bool(data['result'])
 
     async def unban_member(self, user: Union[int, User], only_if_banned: bool = None) -> bool:
         """
@@ -721,7 +721,7 @@ class Chat(ChatModel):
         payload['user_id'] = user if isinstance(user, int) else user.id
 
         response, data = await method_request("GET", APIMethod.UNBAN_CHAT_MEMBER, data=payload)
-        return bool(data)
+        return bool(data['result'])
 
     async def send_message(self,
                            text: str,
@@ -1045,3 +1045,31 @@ class Chat(ChatModel):
         payload['message_id'] = message if isinstance(message, int) else message.id
         payload['chat_id'] = self.id
         return await forward_message(**payload)
+
+    async def delete_message(self, message: Union[int, 'Message']) -> bool:
+        """
+        Deletes specified message
+
+        :param message: `Union[int, 'Message']`
+            Message to be deleted
+
+        :return: `bool`
+            Returns True on success
+
+        Notes:
+         - A message can only be deleted if it was sent less than 48 hours ago.
+         - A dice message in a private chat can only be deleted if it was sent more than 24 hours ago.
+         - Service messages about a supergroup, channel, or forum topic creation can't be deleted.
+         - Bots can delete outgoing messages in private chats, groups, and supergroups.
+         - Bots can delete incoming messages in private chats.
+         - Bots granted can_post_messages permissions can delete outgoing messages in channels.
+         - If the bot is an administrator of a group, it can delete any message there.
+         - If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there.
+        """
+
+        response, data = await method_request("POST", APIMethod.DELETE_MESSAGE, data={
+            'chat_id': self.id,
+            'message_id': message if isinstance(message, int) else message.id
+        })
+
+        return bool(data['result'])

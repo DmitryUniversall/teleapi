@@ -5,6 +5,7 @@ from typing import Type, List, Dict
 from teleapi.core.bots.middlewares import BaseMiddleware
 from teleapi.core.utils.syntax import default
 from teleapi.generics.http.methods.bot import get_me
+from teleapi.types.chat.chat_type import ChatType
 from teleapi.types.update.obj import Update
 from abc import ABC, abstractmethod
 from teleapi.core.executors.executor import BaseExecutor
@@ -32,6 +33,8 @@ class BaseBot(ABC):
         self._executors: List[BaseExecutor] = [
             executor_cls(self) for executor_cls in (project_settings.get('EXECUTORS', []) + self.__class__.__bot_executors__)
         ]
+
+        project_settings.BOT = self
 
     @abstractmethod
     async def dispatch(self, update: Update) -> None:
@@ -137,7 +140,7 @@ class Bot(BaseBot):
     async def dispatch(self, update: Update) -> None:
         if update.message:
             if update.message.text and update.message.entities and update.message.entities[0].type_ == 'bot_command' and update.message.entities[0].offset == 0:
-                if update.message.chat.type_ == "private":
+                if update.message.chat.type_ == ChatType.PRIVATE:
                     if match := re.match(self.get_regex_command_prefix()['private'], update.message.text):
                         asyncio.create_task(
                             self.call_event(update, UpdateEvent.ON_COMMAND, message=update.message, command_name=match.group(1))
