@@ -11,3 +11,11 @@ class MessageTooOld(MessageError):
 
 class MessageTooNew(MessageError):
     pass
+
+
+class MessageIsNotModified(MessageError):
+    pass
+
+
+class MessageHasNoMedia(MessageError):
+    pass

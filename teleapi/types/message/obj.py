@@ -12,7 +12,7 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..poll.sub_object import PollType
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
-from .exceptions import MessageTooOld, MessageTooNew
+from .exceptions import MessageTooOld, MessageTooNew, MessageIsNotModified, MessageHasNoMedia
 from ..chat.chat_type import ChatType
 
 if TYPE_CHECKING:
@@ -227,7 +227,7 @@ class Message(MessageModel):
 
         return await self.chat.forward_message(**payload)
 
-    async def edit_text(self,  # TODO: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message (400)
+    async def edit_text(self,
                         text: str,
                         parse_mode: ParseMode = ParseMode.NONE,
                         disable_web_page_preview: bool = None,
@@ -240,9 +240,12 @@ class Message(MessageModel):
         if keep_reply_markup:
             if not self.reply_markup:
                 logger.warning(
-                    f"reply_markup argument is specified in Message.edit_text call, but message ({self.id}) object didnt have 'reply_markup' attribute defined before")
+                    f"reply_markup argument is specified in Message.edit_text call, but message ({self.id}) object have no 'reply_markup' attribute defined before")
             else:
                 reply_markup = self.reply_markup
+
+        if self.text == text and self.reply_markup == reply_markup:
+            raise MessageIsNotModified("Specified content and reply markup are exactly the same as a current")
 
         payload = exclude_from_dict(locals(), 'self', 'keep_reply_markup')
         payload['message'] = self
@@ -261,10 +264,20 @@ class Message(MessageModel):
                            caption_entities: List['MessageEntity'] = None,
                            reply_markup: Union[
                                'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                           view: 'BaseInlineView' = None
+                           view: 'BaseInlineView' = None,
+                           keep_reply_markup: bool = False
                            ) -> Union['Message', bool]:
+        if keep_reply_markup:
+            if not self.reply_markup:
+                logger.warning(
+                    f"reply_markup argument is specified in Message.edit_caption call, but message ({self.id}) object have no 'reply_markup' attribute defined before")
+            else:
+                reply_markup = self.reply_markup
 
-        payload = exclude_from_dict(locals(), 'self')
+        if self.caption == caption and self.reply_markup == reply_markup:
+            raise MessageIsNotModified("Specified content and reply markup are exactly the same as a current")
+
+        payload = exclude_from_dict(locals(), 'self', 'keep_reply_markup')
         payload['message'] = self
 
         result = await self.chat.edit_message_caption(**payload)
@@ -278,10 +291,20 @@ class Message(MessageModel):
                          media: Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo],
                          reply_markup: Union[
                              'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
-                         view: 'BaseInlineView' = None
+                         view: 'BaseInlineView' = None,
+                         keep_reply_markup: bool = False
                          ) -> Union['Message', bool]:
+        if keep_reply_markup:
+            if not self.reply_markup:
+                logger.warning(
+                    f"reply_markup argument is specified in Message.edit_caption call, but message ({self.id}) object have no 'reply_markup' attribute defined before")
+            else:
+                reply_markup = self.reply_markup
 
-        payload = exclude_from_dict(locals(), 'self')
+        if not any((self.photo, self.animation, self.document, self.audio, self.video)):
+            raise MessageHasNoMedia("Message has no media to be modified")
+
+        payload = exclude_from_dict(locals(), 'self', 'keep_reply_markup')
         payload['message'] = self
 
         result = await self.chat.edit_message_media(**payload)
