@@ -18,10 +18,29 @@ logger = logging.getLogger(__name__)
 
 
 class BaseBot(ABC):
+    """
+    Abstract base class for creating bot instances. Starts and controls all bot activity
+    """
+
     __bot_middlewares__: List[Type[BaseMiddleware]] = []
     __bot_executors__: List[Type[BaseExecutor]] = []
 
     def __init__(self, updater_cls: Type[BaseUpdater], error_manager: BaseErrorManager = None, allowed_updates: List[AllowedUpdates] = None) -> None:
+        """
+        Initialize the BaseBot instance.
+
+        :param updater_cls: `Type[BaseUpdater]`
+            The updater class responsible for fetching updates.
+
+        :param error_manager: `type`
+            The error manager for handling bot errors.
+            If None, creates new ErrorManager
+
+        :param allowed_updates: `type`
+             List of the update types you want your bot to receive. Will be passed to updater_cls
+
+        """
+
         self._is_initialized = False
         self.me = None
         self.error_manager = default(error_manager, ErrorManager())
@@ -38,15 +57,37 @@ class BaseBot(ABC):
 
     @abstractmethod
     async def dispatch(self, update: Update) -> None:
+        """
+        Abstract method to handle update and call events (UpdateEvent) that will be handled by all bot executors
+
+        :param update: `Update`:
+            The update received from the updater.
+        """
         ...
 
     def get_regex_command_prefix(self) -> Dict[str, str]:
+        """
+        Abstract method to handle update and call an event (UpdateEvent) that will be handled by all bot executors
+
+        :return: `Dict[str, str]`
+            Dict with regex patterns that bot will use for recognize command in a message.
+            Must contain 'group' and 'private' fields
+        """
+
         return {
             'group': f"^/(\w+)@{self.me.username}",
             'private': f'^/(\w+)'
         }
 
     async def ainit(self) -> None:
+        """
+        Async initialize bot.
+
+        Notes:
+         - You must call super() if you need to override this method.
+         - Method can be called only one time
+        """
+
         if self._is_initialized:
             raise RuntimeError('Bot is already initialized')
 
@@ -64,6 +105,19 @@ class BaseBot(ABC):
         self._is_initialized = True
 
     async def register_executor(self, executor: BaseExecutor) -> None:
+        """
+        Registers new executor
+
+        :param executor: `BaseExecutor`
+            Executor to be registered
+
+        :raises:
+            :raise TypeError: if executor is not instance of BaseExecutor
+
+        Notes:
+         - Method calls executor.ainit when registering, so you should not call it manually
+        """
+
         if not isinstance(executor, BaseExecutor):
             raise TypeError("executor must be instance of BaseExecutor")
 
@@ -73,11 +127,34 @@ class BaseBot(ABC):
         logger.debug(f"Registered executor {executor} ({type(executor)})")
 
     def unregister_executor(self, executor: BaseExecutor) -> None:
+        """
+        Unregisters executor
+
+        :param executor: `BaseExecutor`
+            Executor to be unregistered
+
+        :raises:
+            :raise ValueError: if executor is not in bot executors list
+        """
+
         self._executors.remove(executor)
 
         logger.debug(f"Unregistered executor {executor}")
 
     async def register_middleware(self, middleware: BaseMiddleware) -> None:
+        """
+        Registers new middleware
+
+        :param middleware: `BaseMiddleware`
+            Middleware to be registered
+
+        :raises:
+            :raise TypeError: if middleware is not instance of BaseMiddleware
+
+        Notes:
+         - Method calls middleware.ainit when registering, so you should not call it manually
+        """
+
         if not isinstance(middleware, BaseMiddleware):
             raise TypeError("middleware must be instance of BaseMiddleware")
 
@@ -87,11 +164,34 @@ class BaseBot(ABC):
         logger.debug(f"Registered middleware {middleware} ({type(middleware)})")
 
     def unregister_middleware(self, middleware: BaseMiddleware) -> None:
+        """
+        Unregisters middleware
+
+        :param middleware: `BaseMiddleware`
+            Middleware to be unregistered
+
+        :raises:
+            :raise ValueError: if middleware is not in bot middlewares list
+        """
+
         self.__middlewares.remove(middleware)
 
         logger.debug(f"Unregistered middleware {middleware}")
 
     async def call_event(self, update: Update, event_type: UpdateEvent, **kwargs) -> None:
+        """
+        Calls an event (UpdateEvent) in all bot executors
+
+        :param update: `Update`
+            The update received from the updater to be passed to executors
+
+        :param event_type: `UpdateEvent`
+            Event type to be passed to executors
+
+        Notes:
+         - All errors that was not processed in executor error_manager will be processed in bot error_manager
+        """
+
         logger.debug(f"Calling event {event_type} on update {update.id}")
 
         tasks = [executor.call_event(update, event_type, **kwargs) for executor in self._executors]
@@ -103,6 +203,13 @@ class BaseBot(ABC):
                 asyncio.create_task(self.error_manager.process_error(error, update))
 
     async def process_update(self, update: Update) -> None:
+        """
+        Processed the update. Calls middleware and `self.dispatch` function
+
+        :param update: `Update`
+            The update received from the updater
+        """
+
         logger.info(f"Processing update {update.id}")
 
         for middleware in self.__middlewares:
@@ -114,6 +221,13 @@ class BaseBot(ABC):
             await middleware.post_process(update)
 
     async def _invoke_update(self, update: Update) -> None:
+        """
+        Calls `self.process_update` function and catches errors. Errors will be processed in bot error_manager
+
+        :param update: `Update`
+            The update received from the updater
+        """
+
         if not self._is_initialized:
             raise RuntimeError("Bot is not initialized yet. Call 'ainit' method before use this")
 
@@ -122,7 +236,12 @@ class BaseBot(ABC):
         except BaseException as error:
             await self.error_manager.process_error(error, update)
 
-    async def run(self):
+    async def run(self) -> None:
+        """
+        Starts the bot. Calls `self.ainit` if needed to.
+        Get updates from `self.updater` and process them in `self._invoke_update`
+        """
+
         logger.info(f"Starting bot with debug: {project_settings.DEBUG}")
 
         if not self._is_initialized:
@@ -137,7 +256,19 @@ class BaseBot(ABC):
 
 
 class Bot(BaseBot):
+    """
+    An object from which the user should inherit for customization.
+    Implements `dispatch` method
+    """
+
     async def dispatch(self, update: Update) -> None:
+        """
+        Handles update and call events (UpdateEvent) that will be handled by all bot executors
+
+        :param update: `Update`:
+            The update received from the updater.
+        """
+
         if update.message:
             if update.message.text and update.message.entities and update.message.entities[0].type_ == 'bot_command' and update.message.entities[0].offset == 0:
                 if update.message.chat.type_ == ChatType.PRIVATE:
