@@ -67,7 +67,7 @@ class BaseInlineView(metaclass=InlineViewMeta):
 
         return decorator
 
-    async def register_button(self, button: BaseInlineViewButton) -> None:
+    def register_button(self, button: BaseInlineViewButton) -> None:
         if not isinstance(button, BaseInlineViewButton):
             raise TypeError("button must be instance of BaseInlineViewButton")
 
