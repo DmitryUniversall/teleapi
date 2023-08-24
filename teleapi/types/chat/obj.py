@@ -984,6 +984,36 @@ class Chat(ChatModel):
 
         return await send_media_group(**payload)
 
+    async def send_animation(self,
+                             animation: Union[bytes, str],
+                             thumbnail: Union[bytes, str] = None,
+                             caption: str = None,
+                             duration: int = None,
+                             width: int = None,
+                             height: int = None,
+                             has_spoiler: bool = None,
+                             parse_mode: ParseMode = ParseMode.NONE,
+                             caption_entities: List['MessageEntity'] = None,
+                             filename: str = None,
+                             disable_notification: bool = None,
+                             protect_content: bool = None,
+                             reply_to_message: Union[int, 'Message'] = None,
+                             allow_sending_without_reply: bool = None,
+                             reply_markup: Union[
+                                 'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                             view: 'BaseInlineView' = None
+                             ) -> 'Message':
+        """
+        Alias for the teleapi.generics.http.methods.messages.send.send_animation
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
+        payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
+                                                                        int) or reply_to_message is None else reply_to_message.id
+        payload['chat_id'] = self.id
+
+        return await send_animation(**payload)
+
     async def copy_message(self,
                            to_chat: Union['Chat', int, str],
                            message: Union['Message', int],

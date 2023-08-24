@@ -15,6 +15,11 @@ from .filelike import Filelike
 from .forece_reply import ForceReply
 from .inline_keyboard_markup import InlineKeyboardMarkup
 from .input_media import InputMedia
+from .input_media.sub_objects.photo import InputMediaPhoto
+from .input_media.sub_objects.audio import InputMediaAudio
+from .input_media.sub_objects.animation import InputMediaAnimation
+from .input_media.sub_objects.document import InputMediaDocument
+from .input_media.sub_objects.video import InputMediaVideo
 from .message import Message
 from .message_entity import MessageEntity
 from .message_id import MessageId

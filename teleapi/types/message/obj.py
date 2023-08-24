@@ -216,6 +216,29 @@ class Message(MessageModel):
 
         return await self.chat.send_media_group(**payload)
 
+    async def reply_animation(self,
+                              animation: Union[bytes, str],
+                              thumbnail: Union[bytes, str] = None,
+                              caption: str = None,
+                              duration: int = None,
+                              width: int = None,
+                              height: int = None,
+                              has_spoiler: bool = None,
+                              parse_mode: ParseMode = ParseMode.NONE,
+                              caption_entities: List['MessageEntity'] = None,
+                              filename: str = None,
+                              disable_notification: bool = None,
+                              protect_content: bool = None,
+                              allow_sending_without_reply: bool = None,
+                              reply_markup: Union[
+                                  'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                              view: 'BaseInlineView' = None
+                              ) -> 'Message':
+        payload = exclude_from_dict(locals(), 'self')
+        payload['reply_to_message'] = self
+
+        return await self.chat.send_animation(**payload)
+
     async def forward(self,
                       to_chat: Union['Chat', int, str],
                       message_thread_id: int = None,
