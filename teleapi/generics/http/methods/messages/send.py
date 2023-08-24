@@ -12,7 +12,7 @@ from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
 from teleapi.core.utils.files import get_file
 from teleapi.core.utils.syntax import default
 from teleapi.enums.parse_mode import ParseMode
-from teleapi.generics.http.methods.utils import make_data_form
+from teleapi.generics.http.methods.utils import make_form_data
 from teleapi.types.contact import Contact, ContactSerializer
 from teleapi.types.input_media.input_media_serializer import InputMediaObjectSerializer
 from teleapi.types.input_media.sub_objects.audio import InputMediaAudio
@@ -88,19 +88,19 @@ async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach
 
     reply_markup = await get_converted_reply_markup(reply_markup, view)
 
-    data_form = None
+    form_data = None
 
     try:
-        data_form = kwargs.pop('data_form')
+        form_data = kwargs.pop('form_data')
     except KeyError:
         pass
 
-    request_data = make_data_form(clear_none_values(
+    request_data = make_form_data(clear_none_values(
         {
-            **exclude_from_dict(locals(), 'view', 'kwargs', 'method', 'data_form'),
+            **exclude_from_dict(locals(), 'view', 'kwargs', 'method', 'form_data'),
             **kwargs
         }
-    ), data_form=data_form)
+    ), form_data=form_data)
 
     from teleapi.types.message.serializer import MessageSerializer
     response, data = await method_request("POST", method, data=request_data)
@@ -212,8 +212,8 @@ async def send_photo(photo: Union[bytes, str],
         many=True,
         keep_none_fields=False
     ) if caption_entities is not None else None
-    data_form = FormData()
-    data_form.add_field('photo', photo, filename=filename)
+    form_data = FormData()
+    form_data.add_field('photo', photo, filename=filename)
 
     return await send(
         method=APIMethod.SEND_PHOTO,
@@ -295,11 +295,11 @@ async def send_audio(audio: Union[bytes, str],
         many=True,
         keep_none_fields=False
     ) if caption_entities is not None else None
-    data_form = FormData()
+    form_data = FormData()
 
     if thumbnail:
-        data_form.add_field('thumbnail', thumbnail)
-    data_form.add_field('audio', audio, filename=filename)
+        form_data.add_field('thumbnail', thumbnail)
+    form_data.add_field('audio', audio, filename=filename)
 
     return await send(
         method=APIMethod.SEND_AUDIO,
@@ -379,11 +379,11 @@ async def send_document(document: Union[bytes, str],
         many=True,
         keep_none_fields=False
     ) if caption_entities is not None else None
-    data_form = FormData()
+    form_data = FormData()
 
     if thumbnail:
-        data_form.add_field('thumbnail', thumbnail)
-    data_form.add_field('document', document, filename=filename)
+        form_data.add_field('thumbnail', thumbnail)
+    form_data.add_field('document', document, filename=filename)
 
     return await send(
         method=APIMethod.SEND_DOCUMENT,
@@ -475,11 +475,11 @@ async def send_video(video: Union[bytes, str],
         many=True,
         keep_none_fields=False
     ) if caption_entities is not None else None
-    data_form = FormData()
+    form_data = FormData()
 
     if thumbnail:
-        data_form.add_field('thumbnail', thumbnail)
-    data_form.add_field('video', video, filename=filename)
+        form_data.add_field('thumbnail', thumbnail)
+    form_data.add_field('video', video, filename=filename)
 
     return await send(
         method=APIMethod.SEND_VIDEO,
@@ -565,11 +565,11 @@ async def send_animation(animation: Union[bytes, str],
         many=True,
         keep_none_fields=False
     ) if caption_entities is not None else None
-    data_form = FormData()
+    form_data = FormData()
 
     if thumbnail:
-        data_form.add_field('thumbnail', thumbnail)
-    data_form.add_field('animation', animation, filename=filename)
+        form_data.add_field('thumbnail', thumbnail)
+    form_data.add_field('animation', animation, filename=filename)
 
     return await send(
         method=APIMethod.SEND_ANIMATION,
@@ -824,7 +824,7 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
     if not (2 <= len(media) <= 10):
         raise ValueError(f"The length of provided media must be gather or equal 2 and less or equal 10")
 
-    data_form = FormData()
+    form_data = FormData()
     request_data = exclude_from_dict(locals(), 'kwargs', 'media')
 
     serialized_media = []
@@ -841,13 +841,13 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
             if file.filename is None:
                 raise ValueError(f"filename was not specified")
 
-            data_form.add_field(file.filename, file.data)
+            form_data.add_field(file.filename, file.data)
 
         if hasattr(file, 'thumbnail_data') and file.thumbnail_data is not None:
             if file.thumbnail_filename is None:
                 raise ValueError(f"thumbnail_filename was not specified")
 
-            data_form.add_field(file.thumbnail_filename, file.thumbnail_data)
+            form_data.add_field(file.thumbnail_filename, file.thumbnail_data)
 
         serialized_media.append(
             InputMediaObjectSerializer().serialize(obj=file, keep_none_fields=False)

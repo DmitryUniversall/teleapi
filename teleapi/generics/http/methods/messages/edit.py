@@ -17,7 +17,7 @@ from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
 from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
 from teleapi.core.http.request.api_method import APIMethod
-from ..utils import make_data_form
+from ..utils import make_form_data
 
 if TYPE_CHECKING:
     from teleapi.types.message import Message
@@ -74,19 +74,19 @@ async def edit_message(method: APIMethod,
 
     reply_markup = await get_converted_reply_markup(reply_markup, view)
 
-    data_form = None
+    form_data = None
 
     try:
-        data_form = kwargs.pop('data_form')
+        form_data = kwargs.pop('form_data')
     except KeyError:
         pass
 
-    request_data = make_data_form(clear_none_values(
+    request_data = make_form_data(clear_none_values(
         {
-            **exclude_from_dict(locals(), 'view', 'kwargs', 'method', 'data_form'),
+            **exclude_from_dict(locals(), 'view', 'kwargs', 'method', 'form_data'),
             **kwargs
         }
-    ), data_form=data_form)
+    ), form_data=form_data)
 
     response, data = await method_request("POST", method, data=request_data)
 
@@ -211,19 +211,19 @@ async def edit_message_media(media: Union[InputMediaAudio, InputMediaDocument, I
      - When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL.
     """
 
-    data_form = FormData()
+    form_data = FormData()
 
     if media.data is not None:
         if media.filename is None:
             raise ValueError(f"filename was not specified")
 
-        data_form.add_field(media.filename, media.data)
+        form_data.add_field(media.filename, media.data)
 
     if hasattr(media, 'thumbnail_data') and media.thumbnail_data is not None:
         if media.thumbnail_filename is None:
             raise ValueError(f"thumbnail_filename was not specified")
 
-        data_form.add_field(media.thumbnail_filename, media.thumbnail_data)
+        form_data.add_field(media.thumbnail_filename, media.thumbnail_data)
 
     media = InputMediaObjectSerializer().serialize(obj=media, keep_none_fields=False)
 
