@@ -39,7 +39,11 @@ class Message(MessageModel):
                     disable_notification: bool = None,
                     protect_content: bool = None,
                     allow_sending_without_reply: bool = None,
+                    view: 'BaseInlineView' = None,
+                    reply_markup: Union[
+                        'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None
                     ) -> 'Message':
+
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
         return await self.chat.send_message(**payload)

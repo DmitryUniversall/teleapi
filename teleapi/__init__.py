@@ -1,7 +1,7 @@
 from teleapi.core.bots.bot import BaseBot, Bot
 from teleapi.core import utils
 from teleapi.types import *
-from teleapi.core.executors import Executor
+from teleapi.core.executors import Executor, BaseExecutor
 from teleapi.core.executors.events import EventListener, event
 from teleapi.core.executors.commands import Command, command
 from teleapi.core.exceptions import TeleapiError

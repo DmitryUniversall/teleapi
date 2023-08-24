@@ -1,12 +1,15 @@
+import inspect
 from abc import ABCMeta
 from collections import defaultdict
-from teleapi.core.utils.collectors import CollectorMeta, collect_subclasses
-from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
+from functools import wraps
 from typing import List, Type
-from .button import BaseInlineViewButton
+
 from teleapi.core.utils.collections import find_in_list
-from teleapi.types.callback_query import CallbackQuery
+from teleapi.core.utils.collectors import CollectorMeta, collect_subclasses
 from teleapi.core.utils.rand import generate_random_string
+from teleapi.types.callback_query import CallbackQuery
+from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
+from .button import BaseInlineViewButton, InlineViewButton
 from ...utils.syntax import default
 
 
@@ -43,6 +46,27 @@ class BaseInlineView(metaclass=InlineViewMeta):
 
         self.message = None
 
+    @staticmethod
+    def view_button(*, text: str, row: int = None, place: int = None, **meta_kwargs):
+        def decorator(func):
+            if not inspect.iscoroutinefunction(func):
+                raise TypeError('You can use this decorator only with coroutine functions')
+
+            @wraps(func)
+            async def wrapper(btn, callback_query: 'CallbackQuery') -> None:
+                return await func(btn.view, callback_query, button=btn)
+
+            meta = type("Meta", (object,), {'text': text, 'row': row, 'place': place, **meta_kwargs})
+
+            button_cls = type(func.__name__, (InlineViewButton,), {
+                "on_click": wrapper,
+                "Meta": meta
+            })
+
+            return button_cls
+
+        return decorator
+
     async def register_button(self, button: BaseInlineViewButton) -> None:
         if not isinstance(button, BaseInlineViewButton):
             raise TypeError("button must be instance of BaseInlineViewButton")
@@ -62,7 +86,8 @@ class BaseInlineView(metaclass=InlineViewMeta):
 
     async def make_markup(self) -> InlineKeyboardMarkup:
         for button in self._buttons:
-            button.callback_data = self.__class__.CALLBACK_DATA_FORMAT.format(self.id, button.id) + (default(f"_{button.callback_data}", ""))
+            button.callback_data = self.__class__.CALLBACK_DATA_FORMAT.format(self.id, button.id) + (
+                default(f"_{button.callback_data}", ""))
 
         return InlineKeyboardMarkup(inline_keyboard=self.get_sorted_buttons())
 

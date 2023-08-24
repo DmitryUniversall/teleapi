@@ -51,8 +51,8 @@ class BaseExecutor(metaclass=ExecutorMeta):
             event_listener_cls(self) for event_listener_cls in (self.__class__.__dynamic_event_listeners__ + self.__class__.__executor_event_listeners__)
         ]
 
-    @classmethod
-    def executor_event(cls, *, attr_name: str = None, event_type: UpdateEvent, before=None, after=None, **meta_kwargs):
+    @staticmethod
+    def executor_event(*, attr_name: str = None, event_type: UpdateEvent, before=None, after=None, **meta_kwargs):
         def decorator(func):
             if not inspect.iscoroutinefunction(func):
                 raise TypeError('You can use this decorator only with coroutine functions')
@@ -65,8 +65,8 @@ class BaseExecutor(metaclass=ExecutorMeta):
 
         return decorator
 
-    @classmethod
-    def executor_command(cls, *, name: str = None, attr_name: str = None, before=None, after=None, **meta_kwargs):
+    @staticmethod
+    def executor_command(*, name: str = None, attr_name: str = None, before=None, after=None, **meta_kwargs):
         def decorator(func):
             if not inspect.iscoroutinefunction(func):
                 raise TypeError('You can use this decorator only with coroutine functions')
