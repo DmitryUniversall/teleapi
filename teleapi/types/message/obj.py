@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Union, List
@@ -411,15 +412,19 @@ class Message(MessageModel):
             message=self,
         )
 
-    async def delete(self) -> bool:
+    async def delete(self, delete_after: int = None) -> bool:
         """
         Deletes this message
+
+        :param delete_after: `int`
+            (Optional) The time in seconds to wait before deleting the message
 
         :return: `bool`
             Returns True on success
 
         :raises:
             :raise MessageTooOld: if message is too old to be deleted (see Notes)
+            :rise ValueError: if delete_after is longer than 48 hours (A message can only be deleted if it was sent less than 48 hours ago)
 
         Notes:
          - A message can only be deleted if it was sent less than 48 hours ago.
@@ -431,6 +436,12 @@ class Message(MessageModel):
          - If the bot is an administrator of a group, it can delete any message there.
          - If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there.
         """
+
+        if delete_after > timedelta(hours=48).total_seconds():
+            raise ValueError("Message can not be deleted after 48 hours")
+
+        if delete_after:
+            await asyncio.sleep(delete_after)
 
         message_time_delta = datetime.now() - self.date
 
