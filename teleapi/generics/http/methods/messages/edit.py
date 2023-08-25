@@ -234,7 +234,7 @@ async def edit_message_media(media: Union[InputMediaAudio, InputMediaDocument, I
     )
 
 
-async def edit_message_reply_markup(reply_markup: Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict],
+async def edit_message_reply_markup(reply_markup: Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
                                     view: 'BaseInlineView' = None,
                                     **kwargs
                                     ) -> Union['Message', bool]:
@@ -242,7 +242,7 @@ async def edit_message_reply_markup(reply_markup: Union['InlineKeyboardMarkup', 
     Edits message reply_markup
 
     :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
-        Additional interface for the message.
+        (Optional) Additional interface for the message.
 
     :param view: `'BaseInlineView'`
         (Optional) Inline view to control message interface.

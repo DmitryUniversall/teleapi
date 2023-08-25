@@ -1,6 +1,7 @@
 import inspect
 from typing import TYPE_CHECKING
 from teleapi.types.inline_keyboard_markup.sub_objects import InlineKeyboardButton
+from ...utils.collections import clear_none_values
 from ...utils.rand import generate_random_string
 from ...utils.syntax import default
 
@@ -43,7 +44,7 @@ def button(*, text: str, row: int = None, place: int = None, **meta_kwargs):
         if not inspect.iscoroutinefunction(func):
             raise TypeError('You can use this decorator only with coroutine functions')
 
-        meta = type("Meta", (object,), {'text': text, 'row': row, 'place': place, **meta_kwargs})
+        meta = type("Meta", (object,), clear_none_values({'text': text, 'row': row, 'place': place, **meta_kwargs}))
 
         button_cls = type(func.__name__, (InlineViewButton,), {
             "on_click": func,

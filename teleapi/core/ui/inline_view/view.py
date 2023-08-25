@@ -9,8 +9,9 @@ from teleapi.core.utils.collectors import CollectorMeta, collect_subclasses
 from teleapi.core.utils.rand import generate_random_string
 from teleapi.types.callback_query import CallbackQuery
 from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
-from .button import BaseInlineViewButton, InlineViewButton
+from .button import BaseInlineViewButton
 from ...utils.syntax import default
+from teleapi.core.ui.inline_view.button import button as button_factory
 
 
 class InlineViewMeta(CollectorMeta, ABCMeta):
@@ -56,14 +57,7 @@ class BaseInlineView(metaclass=InlineViewMeta):
             async def wrapper(btn, callback_query: 'CallbackQuery') -> None:
                 return await func(btn.view, callback_query, button=btn)
 
-            meta = type("Meta", (object,), {'text': text, 'row': row, 'place': place, **meta_kwargs})
-
-            button_cls = type(func.__name__, (InlineViewButton,), {
-                "on_click": wrapper,
-                "Meta": meta
-            })
-
-            return button_cls
+            return button_factory(text=text, row=row, place=place, **meta_kwargs)(wrapper)
 
         return decorator
 
