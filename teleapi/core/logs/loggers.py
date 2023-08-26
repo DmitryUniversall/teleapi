@@ -12,13 +12,13 @@ def setup_logger(name: str, logs_dir: str = None, console_log_level: int = None)
     logger.setLevel(logging.DEBUG)
 
     if logs_dir is not None:
-        os.mkdir(logs_dir)
+        os.makedirs(logs_dir,  exist_ok=True)
 
-        info_file_handler = logging.FileHandler(filename=os.path.join(logs_dir, 'info.log'), encoding='utf-8', mode='w')
+        info_file_handler = logging.FileHandler(filename=os.path.join(logs_dir, 'info.log'), encoding='utf-8')
         info_file_handler.setFormatter(file_log_formatter)
         info_file_handler.setLevel(logging.INFO)
 
-        debug_file_handler = logging.FileHandler(filename=os.path.join(logs_dir, 'debug.log'), encoding='utf-8', mode='w')
+        debug_file_handler = logging.FileHandler(filename=os.path.join(logs_dir, 'debug.log'), encoding='utf-8')
         debug_file_handler.setFormatter(file_log_formatter)
         debug_file_handler.setLevel(logging.DEBUG)
 

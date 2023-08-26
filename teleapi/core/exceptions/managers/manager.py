@@ -1,6 +1,8 @@
+import inspect
 from abc import abstractmethod
+from functools import wraps
 from typing import List, Type
-from .handler import BaseErrorHandler
+from .handler import BaseErrorHandler, handler
 from ...utils.collections import find_in_list
 from teleapi.types.update import Update
 import logging
@@ -34,20 +36,34 @@ class BaseErrorManager(metaclass=ErrorManagerMeta):
             handler_cls(self) for handler_cls in (self.__class__.__dynamic_handlers__ + self.__class__.__manager_handlers__)
         ]
 
-    async def register_handler(self, handler: BaseErrorHandler) -> None:
-        if not isinstance(handler, BaseErrorHandler):
-            raise TypeError("handler must be instance of BaseErrorHandler")
+    async def register_handler(self, handler_instance: BaseErrorHandler) -> None:
+        if not isinstance(handler_instance, BaseErrorHandler):
+            raise TypeError("handler_instance must be instance of BaseErrorHandler")
 
-        self._handlers.append(handler)
+        self._handlers.append(handler_instance)
 
-    def unregister_handler(self, handler: BaseErrorHandler) -> None:
-        self._handlers.remove(handler)
+    def unregister_handler(self, handler_instance: BaseErrorHandler) -> None:
+        self._handlers.remove(handler_instance)
+
+    @staticmethod
+    def manager_handler(*, exception_cls: Type[BaseException], **meta_kwargs):
+        def decorator(func):
+            if not inspect.iscoroutinefunction(func):
+                raise TypeError("You can use this decorator only with coroutine functions")
+
+            @wraps(func)
+            async def wrapper(h, *args, **kwargs):
+                return await func(h.manager, *args, **kwargs, handler=h)
+
+            return handler(exception_cls=exception_cls, **meta_kwargs)(wrapper)
+
+        return decorator
 
     async def process_error(self, error: BaseException, update: Update) -> None:
-        handler = find_in_list(self._handlers, lambda x: issubclass(type(error), x.exception_cls))
+        error_handler = find_in_list(self._handlers, lambda x: issubclass(type(error), x.exception_cls))
 
-        if handler is not None:
-            if await handler.handle(error, update):
+        if error_handler is not None:
+            if await error_handler.handle(error, update):
                 return
         if self.higher_error_manager:
             return await self.higher_error_manager.process_error(error, update)
