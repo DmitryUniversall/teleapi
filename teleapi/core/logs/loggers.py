@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+
 from .formats import FileLogFormatter, ConsoleLogFormatter
 from datetime import datetime
 
@@ -26,12 +28,38 @@ def setup_logger(name: str, logs_dir: str = None, console_log_level: int = None)
         logger.addHandler(debug_file_handler)
 
     if console_log_level is not None:
-        console_handler = logging.StreamHandler()
+        console_handler = logging.StreamHandler(stream=sys.stdout)
         console_handler.setFormatter(console_log_formatter)
         console_handler.setLevel(console_log_level)
         logger.addHandler(console_handler)
 
     return logger
+
+
+def log_async_methods(logger_name: str = None, log_level: int = logging.DEBUG):
+    def decorator(cls):
+        def get_wrapper(func):
+            logger = logging.getLogger(logger_name if logger_name is not None else f"call.{cls.__module__}.{cls.__name__}")
+
+            @wraps(func)
+            async def wrapper(*args, **kwargs) -> Any:
+                logger.log(log_level, f"Called method {func.__name__} of class {cls.__name__}")
+
+                result = await func(*args, **kwargs)
+                logger.log(log_level, f"Got result form method {func.__name__} of class {cls.__name__}: {result}")
+
+                return result
+
+            return wrapper
+
+        for attr in dir(cls):
+            value = getattr(cls, attr)
+            if inspect.iscoroutinefunction(value):
+                setattr(cls, attr, get_wrapper(value))
+
+        return cls
+
+    return decorator
 
 
 def setup_teleapi_logger(logs_dir: str = None, create_files: bool = False, console_log_level: int = logging.INFO):
