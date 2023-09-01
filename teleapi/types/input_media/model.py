@@ -13,7 +13,7 @@ from teleapi.types.message_entity import MessageEntity
 class InputMediaModel(Model):
     type_: str = ConstantModelField("UNKNOWN")  # OVERWRITE IN SUBCLASS
     media: str = StringModelField(is_required=False)
-    caption: str = StringModelField(is_required=False)
+    caption: str = StringModelField(max_size=2024, is_required=False)
     caption_entities: List[MessageEntity] = ListModelField(RelatedModelField(MessageEntity), is_required=False)
     parse_mode: ParseMode = RelatedModelField(ParseMode, is_required=False)
 

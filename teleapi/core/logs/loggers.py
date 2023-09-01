@@ -1,6 +1,9 @@
+import inspect
 import logging
 import os
 import sys
+from functools import wraps
+from typing import Any
 
 from .formats import FileLogFormatter, ConsoleLogFormatter
 from datetime import datetime
@@ -36,24 +39,30 @@ def setup_logger(name: str, logs_dir: str = None, console_log_level: int = None)
     return logger
 
 
-def log_async_methods(logger_name: str = None, log_level: int = logging.DEBUG):
+def log_async_methods(logger_name: str = None, log_result: bool = False, log_level: int = logging.DEBUG):
     def decorator(cls):
         def get_wrapper(func):
-            logger = logging.getLogger(logger_name if logger_name is not None else f"call.{cls.__module__}.{cls.__name__}")
+            logger = logging.getLogger(logger_name if logger_name is not None else f"teleapi_calls.{cls.__module__}.{cls.__name__}")
 
             @wraps(func)
             async def wrapper(*args, **kwargs) -> Any:
                 logger.log(log_level, f"Called method {func.__name__} of class {cls.__name__}")
 
                 result = await func(*args, **kwargs)
-                logger.log(log_level, f"Got result form method {func.__name__} of class {cls.__name__}: {result}")
+
+                if log_result:
+                    logger.log(log_level, f"Got result form method {func.__name__} of class {cls.__name__}: {result}")
 
                 return result
 
             return wrapper
 
         for attr in dir(cls):
+            if attr.startswith("__"):
+                continue
+
             value = getattr(cls, attr)
+
             if inspect.iscoroutinefunction(value):
                 setattr(cls, attr, get_wrapper(value))
 

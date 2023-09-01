@@ -13,10 +13,12 @@ from teleapi.core.state.settings import project_settings
 import re
 from teleapi.core.exceptions.managers import BaseErrorManager, ErrorManager
 import logging
+# from teleapi.core.logs import log_async_methods
 
 logger = logging.getLogger(__name__)
 
 
+# @log_async_methods()
 class BaseBot(ABC):
     """
     Abstract base class for creating bot instances. Starts and controls all bot activity
