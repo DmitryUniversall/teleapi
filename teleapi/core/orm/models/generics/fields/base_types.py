@@ -1,4 +1,4 @@
-from teleapi.core.orm.validators.generics.base_types import BooleanValidator, IntegerValidator, StringValidator, DatetimeValidator
+from teleapi.core.orm.validators.generics.base_types import BooleanValidator, IntegerValidator, StringValidator, DatetimeValidator, FloatValidator
 from teleapi.core.orm.models.field import ModelField
 
 
@@ -15,4 +15,8 @@ class IntegerModelField(ModelField, IntegerValidator):
 
 
 class StringModelField(ModelField, StringValidator):
+    pass
+
+
+class FloatModelField(ModelField, FloatValidator):
     pass

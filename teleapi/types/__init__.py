@@ -22,7 +22,7 @@ from .input_media.sub_objects.document import InputMediaDocument
 from .input_media.sub_objects.video import InputMediaVideo
 from .message import Message
 from .message_entity import MessageEntity
-from .message_id import MessageId
+from teleapi.types.message.sub_objects.message_id import MessageId
 from .photo_size import PhotoSize
 from .poll import Poll
 from .reply_keyboard_markup import ReplyKeyboardMarkup

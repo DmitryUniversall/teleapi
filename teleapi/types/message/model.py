@@ -10,6 +10,21 @@ from teleapi.core.orm.models.generics.fields import (
 )
 from teleapi.types.chat.obj import Chat
 from teleapi.types.user.obj import User
+from .sub_objects.events.chat_shared import ChatShared
+from .sub_objects.events.forum_topic_closed.obj import ForumTopicClosed
+from .sub_objects.events.forum_topic_created import ForumTopicCreated
+from .sub_objects.events.forum_topic_edited import ForumTopicEdited
+from .sub_objects.events.forum_topic_reopened import ForumTopicReopened
+from .sub_objects.events.general_forum_topic_hidden import GeneralForumTopicHidden
+from .sub_objects.events.general_forum_topic_unhidden import GeneralForumTopicUnhidden
+from .sub_objects.events.message_auto_delete_timer_changed import MessageAutoDeleteTimerChanged
+from .sub_objects.events.proximity_alert_triggered import ProximityAlertTriggered
+from .sub_objects.events.user_shared import UserShared
+from .sub_objects.events.video_chat_ended import VideoChatEnded
+from .sub_objects.events.video_chat_participants_invited import VideoChatParticipantsInvited
+from .sub_objects.events.video_chat_scheduled import VideoChatScheduled
+from .sub_objects.events.video_chat_started import VideoChatStarted
+from .sub_objects.events.write_access_allowed import WriteAccessAllowed
 from ..animation.obj import Animation
 from ..audio.obj import Audio
 from ..contact import Contact
@@ -18,9 +33,12 @@ from ..document import Document
 from ..inline_keyboard_markup import InlineKeyboardMarkup
 from datetime import datetime
 
+from ..location.obj import Location
 from ..message_entity import MessageEntity
 from ..photo_size.obj import PhotoSize
 from ..poll import Poll
+from ..story import Story
+from ..venue import Venue
 from ..video.obj import Video
 from ..video_note import VideoNote
 from ..voice.obj import Voice
@@ -183,10 +201,12 @@ class MessageModel(Model):
     contact: Optional[Contact] = RelatedModelField(Contact, is_required=False)
     poll: Optional[Poll] = RelatedModelField(Poll, is_required=False)
     dice: Optional[Dice] = RelatedModelField(Dice, is_required=False)
+    location: Optional[Location] = RelatedModelField(Location, is_required=False)
+    venue: Optional[Venue] = RelatedModelField(Venue, is_required=False)
+    story: Optional[Story] = RelatedModelField(Story, is_required=False)
 
-    # sticker: Optional[Sticker] = RelatedModelField(Sticker, is_required=False) TODO
+    # sticker: Optional[Sticker] = RelatedModelField(Sticker, is_required=False)
     # game: Optional[Game] = RelatedModelField(Game, is_required=False)
-    # location: Optional[Location] = RelatedModelField(Location, is_required=False)
     # web_app_data: Optional[WebAppData] = RelatedModelField(WebAppData, is_required=False)
 
     # Ui
@@ -199,7 +219,7 @@ class MessageModel(Model):
     forward_signature: Optional[str] = StringModelField(is_required=False)
     forward_sender_name: Optional[str] = StringModelField(is_required=False)
 
-    # Events
+    # Events (Service messages)
     new_chat_title: Optional[str] = StringModelField(is_required=False)
     delete_chat_photo: bool = BooleanModelField(is_required=False, default=False)
     group_chat_created: bool = BooleanModelField(is_required=False, default=False)
@@ -210,27 +230,28 @@ class MessageModel(Model):
     new_chat_photo: Optional[List[PhotoSize]] = ListModelField(RelatedModelField(PhotoSize), is_required=False)
     new_chat_members: Optional[List[User]] = ListModelField(RelatedModelField(User), is_required=False)
     left_chat_member: Optional[User] = RelatedModelField(User, is_required=False)
+    message_auto_delete_timer_changed: Optional[MessageAutoDeleteTimerChanged] = RelatedModelField(MessageAutoDeleteTimerChanged, is_required=False)
+    video_chat_scheduled: Optional[VideoChatScheduled] = RelatedModelField(VideoChatScheduled, is_required=False)
+    video_chat_started: Optional[VideoChatStarted] = RelatedModelField(VideoChatStarted, is_required=False)
+    video_chat_ended: Optional[VideoChatEnded] = RelatedModelField(VideoChatEnded, is_required=False)
+    video_chat_participants_invited: Optional[VideoChatParticipantsInvited] = RelatedModelField(VideoChatParticipantsInvited, is_required=False)
+    user_shared: Optional[UserShared] = RelatedModelField(UserShared, is_required=False)
+    chat_shared: Optional[ChatShared] = RelatedModelField(ChatShared, is_required=False)
 
-    # video_chat_scheduled: Optional[VideoChatScheduled] = RelatedModelField(VideoChatScheduled, is_required=False)
-    # video_chat_started: Optional[VideoChatStarted] = RelatedModelField(VideoChatStarted, is_required=False)
-    # video_chat_ended: Optional[VideoChatEnded] = RelatedModelField(VideoChatEnded, is_required=False)
-    # video_chat_participants_invited: Optional[VideoChatParticipantsInvited] = RelatedModelField(VideoChatParticipantsInvited, is_required=False)
-    # successful_payment: Optional[SuccessfulPayment] = RelatedModelField(SuccessfulPayment, is_required=False)
-    # message_auto_delete_timer_changed: Optional[MessageAutoDeleteTimerChanged] = RelatedModelField(MessageAutoDeleteTimerChanged, is_required=False)
-    # write_access_allowed: Optional[WriteAccessAllowed] = RelatedModelField(WriteAccessAllowed, is_required=False)
-    # proximity_alert_triggered: Optional[ProximityAlertTriggered] = RelatedModelField(ProximityAlertTriggered, is_required=False)
+    write_access_allowed: Optional[WriteAccessAllowed] = RelatedModelField(WriteAccessAllowed, is_required=False)
+    proximity_alert_triggered: Optional[ProximityAlertTriggered] = RelatedModelField(ProximityAlertTriggered, is_required=False)
 
     # forum group
-    # forum_topic_created: Optional[ForumTopicCreated] = RelatedModelField(ForumTopicCreated, is_required=False)
-    # forum_topic_edited: Optional[ForumTopicEdited] = RelatedModelField(ForumTopicEdited, is_required=False)
-    # forum_topic_created: Optional[ForumTopicClosed] = RelatedModelField(ForumTopicClosed, is_required=False)
-    # forum_topic_reopened: Optional[ForumTopicReopened] = RelatedModelField(ForumTopicReopened, is_required=False)
-    # general_forum_topic_hidden: Optional[GeneralForumTopicHidden] = RelatedModelField(GeneralForumTopicHidden, is_required=False)
-    # general_forum_topic_unhidden: Optional[GeneralForumTopicUnhidden] = RelatedModelField(GeneralForumTopicUnhidden, is_required=False)
+    forum_topic_created: Optional[ForumTopicCreated] = RelatedModelField(ForumTopicCreated, is_required=False)
+    forum_topic_edited: Optional[ForumTopicEdited] = RelatedModelField(ForumTopicEdited, is_required=False)
+    forum_topic_closed: Optional[ForumTopicClosed] = RelatedModelField(ForumTopicClosed, is_required=False)
+    forum_topic_reopened: Optional[ForumTopicReopened] = RelatedModelField(ForumTopicReopened, is_required=False)
+    general_forum_topic_hidden: Optional[GeneralForumTopicHidden] = RelatedModelField(GeneralForumTopicHidden, is_required=False)
+    general_forum_topic_unhidden: Optional[GeneralForumTopicUnhidden] = RelatedModelField(GeneralForumTopicUnhidden, is_required=False)
+
+    # Payment
+    # successful_payment: Optional[SuccessfulPayment] = RelatedModelField(SuccessfulPayment, is_required=False)
+    # invoice: Optional[Invoice] = RelatedModelField(Invoice, is_required=False)  # Payment
 
     # Other
-    # venue: Optional[Venue] = RelatedModelField(Venue, is_required=False)
-    # invoice: Optional[Invoice] = RelatedModelField(Invoice, is_required=False)  # payment
-    # user_shared: Optional[UserShared] = RelatedModelField(UserShared, is_required=False)
-    # chat_shared: Optional[ChatShared] = RelatedModelField(ChatShared, is_required=False)
     # passport_data: Optional[PassportData] = RelatedModelField(PassportData, is_required=False)

@@ -13,7 +13,8 @@ class ModelSerializerMeta(SerializerMeta):  # TODO: Переписать
         IntegerModelField: IntegerSerializerField,
         StringModelField: StringSerializerField,
         BooleanModelField: BooleanSerializerField,
-        UnixTimestampModelField: UnixTimestampSerializerField
+        UnixTimestampModelField: UnixTimestampSerializerField,
+        FloatModelField: FloatSerializerField
     }
 
     def __new__(mcs, name: str, parents: tuple, attrs: dict) -> type:

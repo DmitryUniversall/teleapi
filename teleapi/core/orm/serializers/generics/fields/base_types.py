@@ -3,7 +3,7 @@ from typing import Any
 
 from teleapi.core.orm.serializers.field import SerializerField
 from teleapi.core.orm.typing import JsonValue
-from teleapi.core.orm.validators.generics.base_types import BooleanValidator, IntegerValidator, StringValidator
+from teleapi.core.orm.validators.generics.base_types import BooleanValidator, IntegerValidator, StringValidator, FloatValidator
 from teleapi.core.orm.validators.validator import Validator
 
 
@@ -37,6 +37,14 @@ class StringSerializerField(SerializerField, StringValidator):
 
     def to_representation(self, obj: Any, **_) -> JsonValue:
         return str(obj)
+
+
+class FloatSerializerField(SerializerField, FloatValidator):
+    def to_object(self, value: JsonValue) -> Any:
+        return float(value)
+
+    def to_representation(self, obj: Any, **_) -> JsonValue:
+        return float(obj)
 
 
 class UnixTimestampSerializerField(SerializerField, IntegerValidator):

@@ -437,7 +437,7 @@ class Message(MessageModel):
          - If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there.
         """
 
-        if delete_after > timedelta(hours=48).total_seconds():
+        if delete_after is not None and delete_after > timedelta(hours=48).total_seconds():
             raise ValueError("Message can not be deleted after 48 hours")
 
         if delete_after:
