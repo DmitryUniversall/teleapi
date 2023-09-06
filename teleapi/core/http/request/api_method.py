@@ -62,3 +62,15 @@ class APIMethod(Enum):
     REVOKE_CHAT_INVITE_LINK = 'revokeChatInviteLink'
     APPROVE_CHAT_JOIN_REQUEST = "approveChatJoinRequest"
     DECLINE_CHAT_JOIN_REQUEST = "declineChatJoinRequest"
+    CREATE_FORUM_TOPIC = "createForumTopic"
+    CLOSE_FORUM_TOPIC = "closeForumTopic"
+    REOPEN_FORUM_TOPIC = "reopenForumTopic"
+    DELETE_FORUM_TOPIC = "deleteForumTopic"
+    UNPIN_ALL_FORUM_TOPIC_MESSAGES = "unpinAllForumTopicMessages"
+    EDIT_GENERAL_FORUM_TOPIC = "editGeneralForumTopic"
+    CLOSE_GENERAL_FORUM_TOPIC = "closeGeneralForumTopic"
+    REOPEN_GENERAL_FORUM_TOPIC = "reopenGeneralForumTopic"
+    HIDE_GENERAL_FORUM_TOPIC = "hideGeneralForumTopic"
+    UNHIDE_GENERAL_FORUM_TOPIC = "unhideGeneralForumTopic"
+    UNPIN_ALL_GENERAL_FORUM_TOPIC_MESSAGES = "unpinAllGeneralForumTopicMessages"
+

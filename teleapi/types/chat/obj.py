@@ -14,6 +14,7 @@ from ..chat_member import ChatMember, ChatMemberObjectSerializer
 from ..chat_member.sub_objects.administrator import ChatAdministrator, ChatAdministratorSerializer
 from ..chat_permissions import ChatPermissions, ChatPermissionsSerializer
 from ..contact import Contact
+from ..forum_topic import ForumTopic, ForumTopicSerializer, ForumTopicIconRGBColor
 from ..input_media.sub_objects.audio import InputMediaAudio
 from ..input_media.sub_objects.document import InputMediaDocument
 from ..input_media.sub_objects.photo import InputMediaPhoto
@@ -331,6 +332,41 @@ class Chat(ChatModel):
         })
 
         return bool(data['result'])
+
+    async def create_topic(self,  # TODO: CRUD for topics
+                           name: str,
+                           icon_color: ForumTopicIconRGBColor = None,
+                           icon_custom_emoji_id: str = None  # TODO: Can be defined as sticker
+                           ) -> ForumTopic:
+        """
+        Creates a topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator rights.
+
+        :param name: `str`
+            Topic name, 1-128 characters
+
+        :param icon_color: `ForumTopicIconRGBColor`
+            (Optional) Color of the topic icon in RGB format. Currently, must be ForumTopicIconRGBColor
+
+        :param icon_custom_emoji_id: `str`  # TODO: Can be defined as sticker
+            (Optional) Unique identifier of the custom emoji shown as the topic icon.
+            Use getForumTopicIconStickers to get all allowed custom emoji identifiers.
+
+        :return: `ForumTopic`
+            Returns created ForumTopic
+        """
+
+        if len(name) > 128:
+            raise ValueError("Topic name must be less than 128 characters long")
+
+        icon_color = icon_color.value
+
+        response, data = await method_request("post", APIMethod.CREATE_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return ForumTopicSerializer().serialize(data=data['result'])
 
     async def export_invite_link(self) -> str:
         """
