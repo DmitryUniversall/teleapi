@@ -34,7 +34,6 @@ class Message(MessageModel):
 
     async def reply(self,
                     text: str,
-                    message_thread_id: int = None,
                     parse_mode: ParseMode = ParseMode.NONE,
                     disable_web_page_preview: bool = None,
                     disable_notification: bool = None,
@@ -47,11 +46,12 @@ class Message(MessageModel):
 
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
+
         return await self.chat.send_message(**payload)
 
     async def reply_photo(self,
                           photo: Union[bytes, str],
-                          message_thread_id: int = None,
                           caption: str = None,
                           parse_mode: ParseMode = ParseMode.NONE,
                           caption_entities: List['MessageEntity'] = None,
@@ -66,11 +66,12 @@ class Message(MessageModel):
                           ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
+
         return await self.chat.send_photo(**payload)
 
     async def reply_audio(self,
                           audio: Union[bytes, str],
-                          message_thread_id: int = None,
                           caption: str = None,
                           parse_mode: ParseMode = ParseMode.NONE,
                           caption_entities: List['MessageEntity'] = None,
@@ -88,12 +89,12 @@ class Message(MessageModel):
                           ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_audio(**payload)
 
     async def reply_document(self,
                              document: Union[bytes, str],
-                             message_thread_id: int = None,
                              caption: str = None,
                              parse_mode: ParseMode = ParseMode.NONE,
                              caption_entities: List['MessageEntity'] = None,
@@ -109,13 +110,13 @@ class Message(MessageModel):
                              ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_document(**payload)
 
     async def reply_video(self,
                           video: Union[bytes, str],
                           thumbnail: Union[bytes, str] = None,
-                          message_thread_id: int = None,
                           caption: str = None,
                           duration: int = None,
                           height: int = None,
@@ -133,12 +134,12 @@ class Message(MessageModel):
                           ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_video(**payload)
 
     async def reply_video_note(self,
                                video_note: Union[bytes, str],
-                               message_thread_id: int = None,
                                duration: int = None,
                                length: int = None,
                                protect_content: bool = None,
@@ -150,6 +151,7 @@ class Message(MessageModel):
                                ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_video_note(**payload)
 
@@ -175,6 +177,7 @@ class Message(MessageModel):
                          ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_poll(**payload)
 
@@ -189,6 +192,7 @@ class Message(MessageModel):
                             ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_contact(**payload)
 
@@ -203,6 +207,7 @@ class Message(MessageModel):
                          ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_dice(**payload)
 
@@ -218,6 +223,7 @@ class Message(MessageModel):
                                 ) -> List['Message']:
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_media_group(**payload)
 
@@ -241,17 +247,18 @@ class Message(MessageModel):
                               ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['reply_to_message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.send_animation(**payload)
 
     async def forward(self,
                       to_chat: Union['Chat', int, str],
-                      message_thread_id: int = None,
                       disable_notification: bool = None,
                       protect_content: bool = None
                       ) -> 'Message':
         payload = exclude_from_dict(locals(), 'self')
         payload['message'] = self
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.forward_message(**payload)
 
@@ -375,6 +382,7 @@ class Message(MessageModel):
         payload['caption'] = default(caption, self.caption)
         payload['caption_entities'] = default(caption_entities, self.caption_entities)
         payload['reply_markup'] = default(reply_markup, self.reply_markup)
+        payload['message_thread_id'] = self.thread_id
 
         return await self.chat.copy_message(**payload)
 

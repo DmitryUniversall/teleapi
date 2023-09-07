@@ -68,7 +68,7 @@ class MessageModel(Model):
             (Optional) True, if the message is sent to a forum topic
         :cvar author: User
             (Optional) The author of the message.
-        :cvar message_thread_id: int
+        :cvar thread_id: int
             (Optional) Unique identifier of a message thread to which the message belongs; for supergroups only
         :cvar sender_chat: Chat
             (Optional) Sender of the message, sent on behalf of a chat.
@@ -172,7 +172,7 @@ class MessageModel(Model):
     has_protected_content: bool = BooleanModelField(is_required=False, default=False)
     is_topic_message: bool = BooleanModelField(is_required=False, default=False)
     author: Optional[User] = RelatedModelField(User, is_required=False)
-    message_thread_id: Optional[int] = IntegerModelField(is_required=False)
+    thread_id: Optional[int] = IntegerModelField(is_required=False)
     sender_chat: Optional[Chat] = RelatedModelField(Chat, is_required=False)
     via_bot: Optional[User] = RelatedModelField(User, is_required=False)
     media_group_id: Optional[str] = StringModelField(is_required=False)

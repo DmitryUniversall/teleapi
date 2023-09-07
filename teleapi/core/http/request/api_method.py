@@ -63,6 +63,7 @@ class APIMethod(Enum):
     APPROVE_CHAT_JOIN_REQUEST = "approveChatJoinRequest"
     DECLINE_CHAT_JOIN_REQUEST = "declineChatJoinRequest"
     CREATE_FORUM_TOPIC = "createForumTopic"
+    EDIT_FORUM_TOPIC = "editForumTopic"
     CLOSE_FORUM_TOPIC = "closeForumTopic"
     REOPEN_FORUM_TOPIC = "reopenForumTopic"
     DELETE_FORUM_TOPIC = "deleteForumTopic"
@@ -73,4 +74,3 @@ class APIMethod(Enum):
     HIDE_GENERAL_FORUM_TOPIC = "hideGeneralForumTopic"
     UNHIDE_GENERAL_FORUM_TOPIC = "unhideGeneralForumTopic"
     UNPIN_ALL_GENERAL_FORUM_TOPIC_MESSAGES = "unpinAllGeneralForumTopicMessages"
-

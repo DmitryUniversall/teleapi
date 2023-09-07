@@ -2,11 +2,14 @@ import os.path
 from datetime import datetime
 from typing import TYPE_CHECKING, Union, List
 
+from aiohttp import FormData
+
 from teleapi.core.http.request import method_request
 from teleapi.core.http.request.api_method import APIMethod
 from teleapi.core.utils.collections import exclude_from_dict, clear_none_values
-from teleapi.types.chat.chat_action import ChatAction
 from teleapi.enums.parse_mode import ParseMode
+from teleapi.types.chat.chat_action import ChatAction
+from teleapi.types.chat_invite_link import ChatInviteLink, ChatInviteLinkSerializer
 from teleapi.types.user import User
 from .exceptions import BadChatType
 from .model import ChatModel
@@ -23,10 +26,8 @@ from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
 from ...core.exceptions.generics import ParameterConflict
 from ...core.utils.files import get_file
-from ...generics.http.methods.messages import *
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
-from teleapi.types.chat_invite_link import ChatInviteLink, ChatInviteLinkSerializer
-from aiohttp import FormData
+from ...generics.http.methods.messages import *
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -333,7 +334,7 @@ class Chat(ChatModel):
 
         return bool(data['result'])
 
-    async def create_topic(self,  # TODO: CRUD for topics
+    async def create_topic(self,
                            name: str,
                            icon_color: ForumTopicIconRGBColor = None,
                            icon_custom_emoji_id: str = None  # TODO: Can be defined as sticker
@@ -354,7 +355,13 @@ class Chat(ChatModel):
 
         :return: `ForumTopic`
             Returns created ForumTopic
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
 
         if len(name) > 128:
             raise ValueError("Topic name must be less than 128 characters long")
@@ -367,6 +374,264 @@ class Chat(ChatModel):
         })
 
         return ForumTopicSerializer().serialize(data=data['result'])
+
+    async def edit_topic(self,
+                         name: str,
+                         message_thread_id: int,
+                         icon_custom_emoji_id: str = None  # TODO: Can be defined as sticker
+                         ) -> bool:
+        """
+        Edits name and icon of a topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have can_manage_topics administrator rights, unless it is the creator of the topic.
+
+        :param name: `str`
+            New topic name, 0-128 characters. If not specified or empty, the current name of the topic will be kept
+
+        :param message_thread_id: `int`
+            Unique identifier for the target message thread of the forum topic
+
+        :param icon_custom_emoji_id: `str`  # TODO: Can be defined as sticker
+            (Optional) New unique identifier of the custom emoji shown as the topic icon.
+            Use getForumTopicIconStickers to get all allowed custom emoji identifiers.
+            Pass an empty string to remove the icon. If not specified, the current icon will be kept
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        if len(name) > 128:
+            raise ValueError("Topic name must be less than 128 characters long")
+
+        response, data = await method_request("post", APIMethod.EDIT_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def close_topic(self, message_thread_id: int) -> bool:
+        """
+        Closes an open topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_manage_topics administrator rights, unless it is the creator of the topic.
+
+        :param message_thread_id: `int`
+            Unique identifier of the target message thread to be closed
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.CLOSE_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def reopen_topic(self, message_thread_id: int) -> bool:
+        """
+        Reopens a closed topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_manage_topics administrator rights, unless it is the creator of the topic.
+
+        :param message_thread_id: `int`
+            Unique identifier of the target message thread to be reopened
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.REOPEN_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def unpin_all_topic_messages(self, message_thread_id: int) -> bool:
+        """
+        Clears the list of pinned messages in a forum topic.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_pin_messages administrator right in the supergroup
+
+        :param message_thread_id: `int`
+            Unique identifier of the target message thread
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.UNPIN_ALL_FORUM_TOPIC_MESSAGES, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def delete_topic(self, message_thread_id: int) -> bool:
+        """
+        Deletes a forum topic along with all its messages in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_delete_messages administrator rights.
+
+        :param message_thread_id: `int`
+            Unique identifier of the target message thread to be deleted
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.DELETE_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def edit_general_topic(self, name: str) -> bool:
+        """
+        Edits the name of the 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have can_manage_topics administrator rights.
+
+        :param name: `int`
+            New topic name, 1-128 characters
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        if len(name) > 128:
+            raise ValueError("Topic name must be less than 128 characters long")
+
+        response, data = await method_request("post", APIMethod.EDIT_GENERAL_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def close_general_topic(self) -> bool:
+        """
+        Closes an open 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_manage_topics administrator rights
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.CLOSE_GENERAL_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def reopen_general_topic(self) -> bool:
+        """
+        Reopens a closed 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_manage_topics administrator rights.
+        The topic will be automatically unhidden if it was hidden
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.REOPEN_GENERAL_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def hide_general_topic(self) -> bool:
+        """
+        Hides the 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_manage_topics administrator rights.
+        The topic will be automatically closed if it was open
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.HIDE_GENERAL_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def unhide_general_topic(self) -> bool:
+        """
+        Unhides the 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_manage_topics administrator rights.
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.UNHIDE_GENERAL_FORUM_TOPIC, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
+
+    async def unpin_all_general_topic_messages(self) -> bool:
+        """
+        Clears the list of pinned messages in a General forum topic.
+        The bot must be an administrator in the chat for this to work
+        and must have the can_pin_messages administrator right in the supergroup.
+
+        :return: `bool`
+            Returns True on success
+        """
+
+        if not self.is_forum:
+            raise BadChatType(f"Chat {self.id} must be forum to use this method")
+
+        response, data = await method_request("post", APIMethod.UNPIN_ALL_GENERAL_FORUM_TOPIC_MESSAGES, data={
+            'chat_id': self.id,
+            **exclude_from_dict(locals(), 'self')
+        })
+
+        return bool(data['result'])
 
     async def export_invite_link(self) -> str:
         """
@@ -775,7 +1040,13 @@ class Chat(ChatModel):
                            ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_message
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -802,7 +1073,13 @@ class Chat(ChatModel):
                          ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_photo
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -832,7 +1109,13 @@ class Chat(ChatModel):
                          ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_audio
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -860,7 +1143,13 @@ class Chat(ChatModel):
                             ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_document
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -891,7 +1180,13 @@ class Chat(ChatModel):
                          ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_video
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -915,7 +1210,13 @@ class Chat(ChatModel):
                               ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_video_note
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -939,6 +1240,7 @@ class Chat(ChatModel):
                         is_closed: bool = None,
                         disable_notification: bool = None,
                         protect_content: bool = None,
+                        message_thread_id: int = None,
                         reply_to_message: Union[int, 'Message'] = None,
                         allow_sending_without_reply: bool = None,
                         reply_markup: Union[
@@ -947,7 +1249,13 @@ class Chat(ChatModel):
                         ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_poll
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -960,6 +1268,7 @@ class Chat(ChatModel):
                            contact: 'Contact',
                            disable_notification: bool = None,
                            protect_content: bool = None,
+                           message_thread_id: int = None,
                            reply_to_message: Union[int, 'Message'] = None,
                            allow_sending_without_reply: bool = None,
                            reply_markup: Union[
@@ -968,7 +1277,13 @@ class Chat(ChatModel):
                            ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_contact
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -982,6 +1297,7 @@ class Chat(ChatModel):
                         disable_notification: bool = None,
                         protect_content: bool = None,
                         reply_to_message: Union[int, 'Message'] = None,
+                        message_thread_id: int = None,
                         allow_sending_without_reply: bool = None,
                         reply_markup: Union[
                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
@@ -989,7 +1305,13 @@ class Chat(ChatModel):
                         ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_dice
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -1001,6 +1323,7 @@ class Chat(ChatModel):
     async def send_media_group(self,
                                media: List[
                                    Union[InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo]],
+                               message_thread_id: int = None,
                                disable_notification: bool = None,
                                protect_content: bool = None,
                                reply_to_message: Union[int, 'Message'] = None,
@@ -1011,7 +1334,13 @@ class Chat(ChatModel):
                                ) -> List['Message']:
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_media_group
+        
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -1023,6 +1352,7 @@ class Chat(ChatModel):
     async def send_animation(self,
                              animation: Union[bytes, str],
                              thumbnail: Union[bytes, str] = None,
+                             message_thread_id: int = None,
                              caption: str = None,
                              duration: int = None,
                              width: int = None,
@@ -1041,7 +1371,13 @@ class Chat(ChatModel):
                              ) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.send.send_animation
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -1053,6 +1389,7 @@ class Chat(ChatModel):
     async def copy_message(self,
                            to_chat: Union['Chat', int, str],
                            message: Union['Message', int],
+                           message_thread_id: int = None,
                            disable_notification: bool = None,
                            protect_content: bool = None,
                            reply_to_message: Union[int, 'Message'] = None,
@@ -1065,7 +1402,13 @@ class Chat(ChatModel):
                            ) -> int:
         """
         Alias for the teleapi.generics.http.methods.messages.forward.copy_message
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'to_chat', 'message', 'reply_to_message')
         payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
@@ -1083,7 +1426,13 @@ class Chat(ChatModel):
                               protect_content: bool = None) -> 'Message':
         """
         Alias for the teleapi.generics.http.methods.messages.forward.forward_message
+
+        :raises:
+            :raise BadChatType: If chat is forum and message_thread_id was not defined
         """
+
+        if self.is_forum and message_thread_id is None:
+            raise BadChatType(f"If chat is forum you must define message_thread_id to send message")
 
         payload = exclude_from_dict(locals(), 'self', 'to_chat', 'message', 'reply_to_message')
         payload['to_chat_id'] = to_chat.id if isinstance(to_chat, Chat) else to_chat
