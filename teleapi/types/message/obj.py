@@ -287,7 +287,7 @@ class Message(MessageModel):
 
         result = await self.chat.edit_message_text(**payload)
 
-        self.text = text  # TODO: Нужно ли?
+        self.text = text
         self.reply_markup = reply_markup
         self.entities = entities
 

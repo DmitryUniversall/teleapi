@@ -28,6 +28,7 @@ from ...core.exceptions.generics import ParameterConflict
 from ...core.utils.files import get_file
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
 from ...generics.http.methods.messages import *
+from .chat_type import ChatType
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -87,7 +88,7 @@ class Chat(ChatModel):
          - If your bot is administrator - it will also be returned
         """
 
-        if self.type_ == 'private':  # TODO: Chat type enum
+        if self.type_ == ChatType.PRIVATE:
             raise BadChatType("There are no administrators in the private chat")
 
         response, data = await method_request("GET", APIMethod.GET_CHAT_ADMINISTRATORS, data={'chat_id': self.id})

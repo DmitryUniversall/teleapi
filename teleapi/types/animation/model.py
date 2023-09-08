@@ -8,6 +8,6 @@ class AnimationModel(FilelikeModel):
     width: int = IntegerModelField()
     height: int = IntegerModelField()
     duration: str = IntegerModelField()
-    thumbnail: Optional[str] = RelatedModelField(PhotoSize, is_required=False)
+    thumbnail: Optional[PhotoSize] = RelatedModelField(PhotoSize, is_required=False)
     file_name: Optional[str] = StringModelField(is_required=False)
     mime_type: Optional[str] = StringModelField(is_required=False)

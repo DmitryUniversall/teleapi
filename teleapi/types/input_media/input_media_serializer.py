@@ -19,7 +19,7 @@ class InputMediaObjectSerializer(Serializer):
     }
 
     def to_object(self, data: JsonValue) -> Any:
-        type_ = data['type_']
+        type_ = data['type']
         serializer = self.__class__.input_media_serializers_mapping.get(type_, None)
 
         if serializer is None:
