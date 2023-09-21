@@ -8,6 +8,8 @@ from teleapi.core.orm.models.generics.fields import (
     RelatedModelField,
 )
 from .chat_type import ChatType
+from ..location.sub_objects.chat_location import ChatLocation
+from teleapi.types.chat_permissions import ChatPermissions
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -41,6 +43,6 @@ class ChatModel(Model):
     sticker_set_name: Optional[str] = StringModelField(is_required=False)
     linked_chat_id: Optional[int] = IntegerModelField(is_required=False)
 
-    # location = RelatedValidator(ChatLocation, is_required=False)
-    # permissions = RelatedValidator(ChatPermissions, is_required=False)
+    location = RelatedModelField(ChatLocation, is_required=False)
+    permissions = RelatedModelField(ChatPermissions, is_required=False)
     # photo = RelatedValidator(ChatPhoto)

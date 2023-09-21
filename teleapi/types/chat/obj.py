@@ -14,8 +14,6 @@ from teleapi.types.user import User
 from .chat_type import ChatType
 from .exceptions import BadChatType
 from .model import ChatModel
-from ..chat_member import ChatMember, ChatMemberObjectSerializer
-from ..chat_member.sub_objects.administrator import ChatAdministrator, ChatAdministratorSerializer
 from ..chat_permissions import ChatPermissions, ChatPermissionsSerializer
 from ..contact import Contact
 from ..forum_topic import ForumTopic, ForumTopicSerializer, ForumTopicIconRGBColor
@@ -27,6 +25,7 @@ from ..location import Location
 from ..menu_button import MenuButton, MenuButtonSerializer
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
+from ..poll import Poll
 from ...core.exceptions.generics import ParameterConflict
 from ...core.utils.files import get_file
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
@@ -39,6 +38,8 @@ if TYPE_CHECKING:
     from ..inline_keyboard_markup import InlineKeyboardMarkup
     from ..reply_keyboard_markup import ReplyKeyboardMarkup
     from ..reply_keyboard_markup.sub_objects.keyboard_remove import ReplyKeyboardRemove
+    from ..chat_member import ChatMember
+    from ..chat_member.sub_objects.administrator import ChatAdministrator
 
 
 class Chat(ChatModel):
@@ -72,6 +73,7 @@ class Chat(ChatModel):
         :return: 'ChatMember'
             An instance of the 'ChatMember' class, or any of its subclasses (sub_objects).
         """
+        from ..chat_member import ChatMemberObjectSerializer
 
         response, data = await method_request("GET", APIMethod.GET_CHAT_MEMBER, data={
             'chat_id': self.id,
@@ -80,6 +82,7 @@ class Chat(ChatModel):
         return ChatMemberObjectSerializer().serialize(data=data['result'])
 
     async def get_administrators(self) -> List['ChatAdministrator']:
+
         """
         Use this method to get a list of administrators in a chat, which aren't bots.
 
@@ -89,6 +92,7 @@ class Chat(ChatModel):
         Notes:
          - If your bot is administrator - it will also be returned
         """
+        from ..chat_member.sub_objects.administrator import ChatAdministratorSerializer
 
         if self.type_ == ChatType.PRIVATE:
             raise BadChatType("There are no administrators in the private chat")
@@ -1567,6 +1571,57 @@ class Chat(ChatModel):
         payload['message_id'] = message if isinstance(message, int) or message is None else message.id
 
         return await edit_message_reply_markup(**payload)
+
+    async def edit_message_live_location(self,
+                                         location: Location,
+                                         message: Union[int, 'Message'] = None,
+                                         inline_message_id: str = None,
+                                         reply_markup: Union[
+                                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                         view: 'BaseInlineView' = None
+                                         ) -> Union['Message', bool]:
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.edit_message_live_location
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await edit_message_live_location(**payload)
+
+    async def stop_message_live_location(self,
+                                         message: Union[int, 'Message'] = None,
+                                         inline_message_id: str = None,
+                                         reply_markup: Union[
+                                             'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                         view: 'BaseInlineView' = None
+                                         ) -> Union['Message', bool]:
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.stop_message_live_location
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await edit_message_live_location(**payload)
+
+    async def stop_poll(self,
+                        message: Union[int, 'Message'] = None,
+                        reply_markup: Union[
+                            'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                        view: 'BaseInlineView' = None
+                        ) -> 'Poll':
+        """
+        Alias for the teleapi.generics.http.methods.messages.edit.stop_poll
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'message')
+        payload['chat_id'] = self.id
+        payload['message_id'] = message if isinstance(message, int) or message is None else message.id
+
+        return await stop_poll(**payload)
 
     async def get_menu_button(self) -> MenuButton:
         """

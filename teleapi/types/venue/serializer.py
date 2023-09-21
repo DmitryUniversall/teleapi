@@ -5,7 +5,7 @@ from teleapi.types.location import LocationSerializer
 
 
 class VenueSerializer(ModelSerializer):
-    location = RelatedSerializerField(LocationSerializer(), is_required=False)
+    location = RelatedSerializerField(LocationSerializer())
 
     class Meta:
         model = Venue

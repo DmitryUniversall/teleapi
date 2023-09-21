@@ -7,6 +7,8 @@ from teleapi.core.orm.serializers.generics.fields import (
 from teleapi.core.orm.serializers.generics.serializers import ModelSerializer
 from .obj import Chat
 from .chat_type import ChatType
+from ..location.sub_objects.chat_location import ChatLocationSerializer
+from teleapi.types.chat_permissions import ChatPermissionsSerializer
 
 
 class ChatSerializer(ModelSerializer):
@@ -14,9 +16,9 @@ class ChatSerializer(ModelSerializer):
     active_usernames = ListSerializerField(StringSerializerField(), is_required=False, default=[])
     pinned_message = RelatedSerializerField('MessageSerializer', is_required=False)
 
-    # location = RelatedValidator(ChatLocation, is_required=False)
-    # permissions = RelatedValidator(ChatPermissions, is_required=False)
-    # photo = RelatedValidator(ChatPhoto)
+    location = RelatedSerializerField(ChatLocationSerializer(), is_required=False)
+    permissions = RelatedSerializerField(ChatPermissionsSerializer(), is_required=False)
+    # photo = RelatedSerializerField(ChatPhoto, is_required=False)
 
     class Meta:
         model = Chat

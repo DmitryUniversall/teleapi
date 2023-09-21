@@ -3,20 +3,22 @@ from typing import Union
 
 from aiohttp import FormData
 
+from teleapi.core.http.request.api_method import APIMethod
+from teleapi.core.http.request.api_request import method_request
+from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
+from teleapi.enums.parse_mode import ParseMode
+from teleapi.types.forece_reply import ForceReply
+from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
 from teleapi.types.input_media.input_media_serializer import InputMediaObjectSerializer
 from teleapi.types.input_media.sub_objects.audio import InputMediaAudio
 from teleapi.types.input_media.sub_objects.document import InputMediaDocument
 from teleapi.types.input_media.sub_objects.photo import InputMediaPhoto
 from teleapi.types.input_media.sub_objects.video import InputMediaVideo
+from teleapi.types.location import LocationSerializer, Location
 from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
-from teleapi.core.http.request.api_request import method_request
-from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
-from .utils import get_converted_reply_markup
-from teleapi.types.forece_reply import ForceReply
-from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
-from teleapi.enums.parse_mode import ParseMode
+from teleapi.types.poll import Poll, PollSerializer
 from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
-from teleapi.core.http.request.api_method import APIMethod
+from .utils import get_converted_reply_markup
 from ..utils import make_form_data
 
 if TYPE_CHECKING:
@@ -234,7 +236,8 @@ async def edit_message_media(media: Union[InputMediaAudio, InputMediaDocument, I
     )
 
 
-async def edit_message_reply_markup(reply_markup: Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+async def edit_message_reply_markup(reply_markup: Union[
+    'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
                                     view: 'BaseInlineView' = None,
                                     **kwargs
                                     ) -> Union['Message', bool]:
@@ -259,3 +262,88 @@ async def edit_message_reply_markup(reply_markup: Union['InlineKeyboardMarkup', 
         **exclude_from_dict(locals(), 'kwargs'),
         **kwargs
     )
+
+
+async def edit_message_live_location(location: Location, **kwargs) -> Union['Message', bool]:
+    """
+    Edits live location messages.
+    A location can be edited until its live_period expires or editing is explicitly disabled by a call to stopMessageLiveLocation.
+
+    :param location: `Location`
+        ParameterDescription
+
+    :param kwargs: `dict`
+        Other parameters specified in `edit_message` function above
+
+    :return: `Union['Message', bool]`
+        On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.
+    """
+
+    location_data = LocationSerializer().serialize(obj=location)
+
+    return await edit_message(
+        method=APIMethod.EDIT_MESSAGE_LIVE_LOCATION,
+        **exclude_from_dict(location_data, 'live_period'),
+        **kwargs
+    )
+
+
+async def stop_message_live_location(**kwargs) -> Union['Message', bool]:
+    """
+    Stops updating a live location message before live_period expires
+
+    :param kwargs: `dict`
+        Other parameters specified in `edit_message` function above
+
+    :return: `Union['Message', bool]`
+        On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.
+    """
+
+    return await edit_message(
+        method=APIMethod.STOP_MESSAGE_LIVE_LOCATION,
+        **kwargs
+    )
+
+
+async def stop_poll(chat_id: Union[int, str],
+                    message_id: int,
+                    reply_markup: Union[
+                        'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict],
+                    view: 'BaseInlineView'
+                    ) -> Poll:
+    """
+    Stops a poll which was sent by the bot
+
+    :param chat_id: `Union[int, str]`
+        Required if inline_message_id is not specified.
+        Unique identifier for the target chat or username of the target channel (in the format @channelusername)
+
+    :param message_id: `int`
+        Required if inline_message_id is not specified. Identifier of the message to edit
+
+    :param reply_markup: `Union['InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict]`
+        (Optional) Additional interface for the message.
+
+    :param view: `BaseInlineView`
+        (Optional) Inline view to control message interface.
+
+    :return: `Poll`
+        On success, the stopped Poll is returned.
+
+    :raises:
+        :raise ApiRequestError: ApiRequestError or any of its subclasses if request sent to the Telegram Bot API failed
+        :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
+        :raise ValidationError: If the provided data model contains incorrect data or serialization failed
+        :raise ValueError: If (chat_id and message_id) or inline_message_id was not specified
+    """
+
+    reply_markup = await get_converted_reply_markup(reply_markup, view)
+
+    request_data = make_form_data(clear_none_values({
+        **exclude_from_dict(locals(), 'view'),
+        **kwargs
+    }))
+
+    response, data = await method_request("POST", APIMethod.STOP_POLL, data=request_data)
+
+    return PollSerializer().serialize(data=data)

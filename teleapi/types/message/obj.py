@@ -3,8 +3,10 @@ import logging
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Union, List
 
-from .model import MessageModel
 from teleapi.enums.parse_mode import ParseMode
+from .exceptions import MessageTooOld, MessageTooNew, MessageIsNotModified, MessageHasNoMedia
+from .model import MessageModel
+from ..chat.chat_type import ChatType
 from ..contact import Contact
 from ..input_media.sub_objects.audio import InputMediaAudio
 from ..input_media.sub_objects.document import InputMediaDocument
@@ -12,10 +14,9 @@ from ..input_media.sub_objects.photo import InputMediaPhoto
 from ..input_media.sub_objects.video import InputMediaVideo
 from ..location import Location
 from ..poll.sub_object import PollType
+from ..poll import Poll
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
-from .exceptions import MessageTooOld, MessageTooNew, MessageIsNotModified, MessageHasNoMedia
-from ..chat.chat_type import ChatType
 
 if TYPE_CHECKING:
     from ..inline_keyboard_markup import InlineKeyboardMarkup
@@ -376,6 +377,52 @@ class Message(MessageModel):
         result = await self.chat.edit_message_reply_markup(**payload)
 
         self.reply_markup = reply_markup
+
+        return result
+
+    async def edit_live_location(self,
+                                 location: Location,
+                                 reply_markup: Union[
+                                     'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                 view: 'BaseInlineView' = None
+                                 ) -> Union['Message', bool]:
+
+        payload = exclude_from_dict(locals(), 'self')
+        payload['message'] = self
+
+        result = await self.chat.edit_message_live_location(**payload)
+
+        self.location = location
+
+        return result
+
+    async def stop_live_location(self,
+                                 reply_markup: Union[
+                                     'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                                 view: 'BaseInlineView' = None
+                                 ) -> Union['Message', bool]:
+
+        payload = exclude_from_dict(locals(), 'self')
+        payload['message'] = self
+
+        result = await self.chat.stop_message_live_location(**payload)
+
+        self.location = None
+
+        return result
+
+    async def stop_poll(self,
+                        reply_markup: Union[
+                            'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                        view: 'BaseInlineView' = None
+                        ) -> Poll:
+
+        payload = exclude_from_dict(locals(), 'self')
+        payload['message'] = self
+
+        result = await self.chat.stop_poll(**payload)
+
+        self.poll = result
 
         return result
 

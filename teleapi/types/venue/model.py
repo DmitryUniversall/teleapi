@@ -5,9 +5,9 @@ from teleapi.types.location import Location
 
 
 class VenueModel(Model):
-    location: Location = RelatedModelField(Location)
     title: str = StringModelField()
     address: str = StringModelField()
+    location: Location = RelatedModelField(Location)
     foursquare_id: Optional[str] = StringModelField(is_required=False)
     foursquare_type: Optional[str] = StringModelField(is_required=False)
     google_place_id: Optional[str] = StringModelField(is_required=False)
