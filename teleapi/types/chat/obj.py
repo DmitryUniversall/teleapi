@@ -22,6 +22,7 @@ from ..input_media.sub_objects.audio import InputMediaAudio
 from ..input_media.sub_objects.document import InputMediaDocument
 from ..input_media.sub_objects.photo import InputMediaPhoto
 from ..input_media.sub_objects.video import InputMediaVideo
+from ..menu_button import MenuButton, MenuButtonSerializer
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
 from ...core.exceptions.generics import ParameterConflict
@@ -46,7 +47,7 @@ class Chat(ChatModel):
     @classmethod
     async def get_chat(cls, chat_id: Union[int, str]) -> 'Chat':
         """
-        Gets information about a chat.
+        Fetches information about a chat.
 
         :param chat_id: Union[int, str]
             The unique identifier of the chat. This can be either an integer chat ID or a string representing a chat username.
@@ -62,7 +63,7 @@ class Chat(ChatModel):
 
     async def get_member(self, user: Union[int, User]) -> 'ChatMember':
         """
-        Gets information about a chat member.
+        Fetches information about a chat member.
 
         :param user: `Union[int, User]`
             User to be banned from the chat. Can be provided as User instance or id
@@ -96,7 +97,7 @@ class Chat(ChatModel):
 
     async def get_member_count(self) -> int:
         """
-        Gets the count of members in the chat.
+        Fetches the count of members in the chat.
 
         :return: 'int'
             The count of members in the chat.
@@ -1544,3 +1545,17 @@ class Chat(ChatModel):
         payload['message_id'] = message if isinstance(message, int) or message is None else message.id
 
         return await edit_message_reply_markup(**payload)
+
+    async def get_menu_button(self) -> MenuButton:
+        """
+        Fetches the current value of the bots menu button in a private chat, or the default menu button
+
+        :return: `MenuButton`
+            Returns MenuButton on success.
+        """
+
+        response, data = await method_request("get", APIMethod.GET_CHAT_MENU_BUTTON, data={
+            'chat_id': self.id,
+        })
+
+        return MenuButtonSerializer().serialize(data=data['result'])

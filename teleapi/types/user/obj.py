@@ -1,5 +1,5 @@
 from .model import UserModel
-from .sub_objects.user_profile_photos import UserProfilePhotos, UserProfilePhotosSerializer
+from .sub_objects.profile_photos import UserProfilePhotos, UserProfilePhotosSerializer
 from ...core.http.request import method_request, APIMethod
 from teleapi.core.utils.collections import clear_none_values
 

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 async def get_me() -> 'User':
     """
-    Gets bot user object
+    Fetches bot user object
 
     :return: `User`
         Bot user object

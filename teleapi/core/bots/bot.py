@@ -13,13 +13,14 @@ from teleapi.core.state.settings import project_settings
 import re
 from teleapi.core.exceptions.managers import BaseErrorManager, ErrorManager
 import logging
+from teleapi.types.bot import TelegramBotObject
 # from teleapi.core.logs import log_async_methods
 
 logger = logging.getLogger(__name__)
 
 
 # @log_async_methods()
-class BaseBot(ABC):
+class BaseBot(TelegramBotObject, ABC):
     """
     Abstract base class for creating bot instances. Starts and controls all bot activity
     """
@@ -40,13 +41,10 @@ class BaseBot(ABC):
 
         :param allowed_updates: `type`
              List of the update types you want your bot to receive. Will be passed to updater_cls
-
         """
 
         self._is_initialized = False
-        self.me = None
-        self.error_manager = default(error_manager, ErrorManager())
-        self.updater = updater_cls(bot=self, allowed_updates=allowed_updates)
+        self._updater = updater_cls(bot=self, allowed_updates=allowed_updates)
 
         self.__middlewares: List[BaseMiddleware] = [
             middleware_cls(self) for middleware_cls in (project_settings.get('MIDDLEWARES', []) + self.__class__.__bot_middlewares__)
@@ -55,6 +53,8 @@ class BaseBot(ABC):
             executor_cls(self) for executor_cls in (project_settings.get('EXECUTORS', []) + self.__class__.__bot_executors__)
         ]
 
+        self.me = None
+        self.error_manager = default(error_manager, ErrorManager())
         project_settings.BOT = self
 
     @abstractmethod
@@ -93,7 +93,7 @@ class BaseBot(ABC):
         if self._is_initialized:
             raise RuntimeError('Bot is already initialized')
 
-        await self.updater.ainit()
+        await self._updater.ainit()
 
         self.me = await get_me()
 
@@ -250,7 +250,7 @@ class BaseBot(ABC):
             await self.ainit()
 
         while True:
-            updates = await self.updater.get_updates()
+            updates = await self._updater.get_updates()
 
             if updates:
                 for update in updates:
