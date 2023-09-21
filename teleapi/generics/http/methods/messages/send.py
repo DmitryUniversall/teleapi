@@ -19,6 +19,7 @@ from teleapi.types.input_media.sub_objects.audio import InputMediaAudio
 from teleapi.types.input_media.sub_objects.document import InputMediaDocument
 from teleapi.types.input_media.sub_objects.photo import InputMediaPhoto
 from teleapi.types.input_media.sub_objects.video import InputMediaVideo
+from teleapi.types.location import Location, LocationSerializer
 from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
 from teleapi.types.poll.sub_object import PollType
 from .utils import get_converted_reply_markup
@@ -831,9 +832,11 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
 
     media_types = [type(file) for file in media]
 
-    if InputMediaDocument in media_types and any((t in media_types for t in [InputMediaAudio, InputMediaPhoto, InputMediaVideo])):
+    if InputMediaDocument in media_types and any(
+            (t in media_types for t in [InputMediaAudio, InputMediaPhoto, InputMediaVideo])):
         raise TypeError('Documents files can be only grouped on an album with messages of the same type')
-    if InputMediaAudio in media_types and any((t in media_types for t in [InputMediaDocument, InputMediaPhoto, InputMediaVideo])):
+    if InputMediaAudio in media_types and any(
+            (t in media_types for t in [InputMediaDocument, InputMediaPhoto, InputMediaVideo])):
         raise TypeError('Audio files can be only grouped on an album with messages of the same type')
 
     for file in media:
@@ -858,4 +861,27 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
         media=serialized_media,
         **request_data,
         **kwargs
+    )
+
+
+async def send_location(location: Location, **kwargs) -> 'Message':
+    """
+    Sends point on the map
+
+    :param location: `Location`
+        Location object to be sent
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
+    """
+
+    location_data = LocationSerializer().serialize(obj=location)
+
+    return await send(
+        method=APIMethod.SEND_DICE,
+        **location_data,
+        **kwargs,
     )

@@ -18,10 +18,10 @@ class TelegramBotObject:
             A list of bot commands to be set as the list of the bot commands. At most 100 commands can be specified.
 
         :param scope: `BotCommandScope`
-            A describing scope of users for which the commands are relevant. Defaults to BotCommandScopeDefault.
+            (Optional) A describing scope of users for which the commands are relevant. Defaults to BotCommandScopeDefault.
 
-        :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+        :param language_code: `str`
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated commands
 
         :return: `bool`
@@ -45,7 +45,7 @@ class TelegramBotObject:
             A describing scope of users for which the commands are relevant. Defaults to BotCommandScopeDefault.
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated commands
 
         :return: `bool`
@@ -68,7 +68,7 @@ class TelegramBotObject:
             A describing scope of users for which the commands are relevant. Defaults to BotCommandScopeDefault.
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code or an empty string
+             (Optional) A two-letter ISO 639-1 language code or an empty string
 
         :return: `List[TelegramBotCommandScope]`
             Returns an Array of BotCommand objects.
@@ -89,7 +89,7 @@ class TelegramBotObject:
             New bot name; 0-64 characters. Pass an empty string to remove the dedicated name for the given language
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated name
 
         :return: `bool`
@@ -117,7 +117,7 @@ class TelegramBotObject:
             New bot description; 0-512 characters. Pass an empty string to remove the dedicated description for the given language
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated description
 
         :return: `bool`
@@ -142,7 +142,7 @@ class TelegramBotObject:
         Fetches the current bot description for the given user language
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated description
 
         :return: `bool`
@@ -165,7 +165,7 @@ class TelegramBotObject:
             Pass an empty string to remove the dedicated short description for the given language.
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated short description
 
         :return: `bool`
@@ -187,7 +187,7 @@ class TelegramBotObject:
         Fetches the current bot short description for the given user language
 
         :param language_code: `type`
-             A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
+             (Optional) A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope,
              for whose language there are no dedicated short description
 
         :return: `bool`
@@ -224,10 +224,10 @@ class TelegramBotObject:
         These rights will be suggested to users, but they are free to modify the list before adding the bot.
 
         :param rights: `ChatAdministratorRights`
-            New default administrator rights. If not specified, the default administrator rights will be cleared.
+            (Optional) New default administrator rights. If not specified, the default administrator rights will be cleared.
 
         :param for_channels: `bool`
-            Pass True to change the default administrator rights of the bot in channels.
+            (Optional) Pass True to change the default administrator rights of the bot in channels.
             Otherwise, the default administrator rights of the bot for groups and supergroups will be changed
 
         :return: `bool`
@@ -246,7 +246,7 @@ class TelegramBotObject:
         Fetches the current default administrator rights of the bot.
 
         :param for_channels: `bool`
-            Pass True to get default administrator rights of the bot in channels.
+            (Optional) Pass True to get default administrator rights of the bot in channels.
             Otherwise, default administrator rights of the bot for groups and supergroups will be returned.
 
         :return: `bool`

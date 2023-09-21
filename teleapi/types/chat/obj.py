@@ -11,6 +11,7 @@ from teleapi.enums.parse_mode import ParseMode
 from teleapi.types.chat.chat_action import ChatAction
 from teleapi.types.chat_invite_link import ChatInviteLink, ChatInviteLinkSerializer
 from teleapi.types.user import User
+from .chat_type import ChatType
 from .exceptions import BadChatType
 from .model import ChatModel
 from ..chat_member import ChatMember, ChatMemberObjectSerializer
@@ -22,6 +23,7 @@ from ..input_media.sub_objects.audio import InputMediaAudio
 from ..input_media.sub_objects.document import InputMediaDocument
 from ..input_media.sub_objects.photo import InputMediaPhoto
 from ..input_media.sub_objects.video import InputMediaVideo
+from ..location import Location
 from ..menu_button import MenuButton, MenuButtonSerializer
 from ..message_entity import MessageEntity
 from ..poll.sub_object import PollType
@@ -29,7 +31,6 @@ from ...core.exceptions.generics import ParameterConflict
 from ...core.utils.files import get_file
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
 from ...generics.http.methods.messages import *
-from .chat_type import ChatType
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -1387,6 +1388,27 @@ class Chat(ChatModel):
         payload['chat_id'] = self.id
 
         return await send_animation(**payload)
+
+    async def send_location(self,
+                            location: Location,
+                            disable_notification: bool = None,
+                            protect_content: bool = None,
+                            reply_to_message: Union[int, 'Message'] = None,
+                            allow_sending_without_reply: bool = None,
+                            reply_markup: Union[
+                                'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
+                            view: 'BaseInlineView' = None
+                            ) -> 'Message':
+        """
+        Alias for the teleapi.generics.http.methods.messages.send.send_location
+        """
+
+        payload = exclude_from_dict(locals(), 'self', 'reply_to_message')
+        payload['reply_to_message_id'] = reply_to_message if isinstance(reply_to_message,
+                                                                        int) or reply_to_message is None else reply_to_message.id
+        payload['chat_id'] = self.id
+
+        return await send_location(**payload)
 
     async def copy_message(self,
                            to_chat: Union['Chat', int, str],
