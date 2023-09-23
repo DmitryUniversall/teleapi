@@ -7,6 +7,7 @@ from teleapi.core.orm.serializers.generics.fields import (
 from teleapi.core.orm.serializers.generics.serializers import ModelSerializer
 from .obj import Chat
 from .chat_type import ChatType
+from ..chat_photo import ChatPhotoSerializer
 from ..location.sub_objects.chat_location import ChatLocationSerializer
 from teleapi.types.chat_permissions import ChatPermissionsSerializer
 
@@ -18,7 +19,7 @@ class ChatSerializer(ModelSerializer):
 
     location = RelatedSerializerField(ChatLocationSerializer(), is_required=False)
     permissions = RelatedSerializerField(ChatPermissionsSerializer(), is_required=False)
-    # photo = RelatedSerializerField(ChatPhoto, is_required=False)
+    photo = RelatedSerializerField(ChatPhotoSerializer(), is_required=False)
 
     class Meta:
         model = Chat

@@ -18,7 +18,7 @@ class ChatMember(ChatMemberModel):
 
         :param chat: `Union[Chat, int]`
             Chat in which you need to install custom title.
-            if `int` - will be fetched using id
+            if `int | str` - will be fetched using id
 
         :param permissions: `ChatPermissions`
             New user permissions
@@ -70,7 +70,7 @@ class ChatMember(ChatMemberModel):
 
         :param chat: `Union[Chat, int]`
             Chat in which you need to install custom title.
-            if `int` - will be fetched using id
+            if `int | str` - will be fetched using id
 
         :param is_anonymous: `bool`
             (Optional) Pass True if the promoted administrator's actions should be shown as anonymous in the chat.
@@ -146,7 +146,7 @@ class ChatMember(ChatMemberModel):
 
         :param chat: `Union[Chat, int]`
             Chat in which you need to install custom title.
-            if `int` - will be fetched using id
+            if `int | str` - will be fetched using id
 
         :param until_date: `datetime`
             (Optional) The date and time until which the ban will be active. If not provided, the ban will be permanent.
@@ -177,7 +177,7 @@ class ChatMember(ChatMemberModel):
 
         :param chat: `Union[Chat, int]`
             Chat in which you need to install custom title.
-            if `int` - will be fetched using id
+            if `int | str` - will be fetched using id
 
         :param only_if_banned: `bool`
             (Optional) Do nothing if the user is not banned

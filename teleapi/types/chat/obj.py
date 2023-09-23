@@ -24,8 +24,6 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..location import Location
 from ..menu_button import MenuButton, MenuButtonSerializer
 from ..message_entity import MessageEntity
-from ..poll.sub_object import PollType
-from ..poll import Poll
 from ...core.exceptions.generics import ParameterConflict
 from ...core.utils.files import get_file
 from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
@@ -40,6 +38,8 @@ if TYPE_CHECKING:
     from ..reply_keyboard_markup.sub_objects.keyboard_remove import ReplyKeyboardRemove
     from ..chat_member import ChatMember
     from ..chat_member.sub_objects.administrator import ChatAdministrator
+    from ..poll.sub_object import PollType
+    from ..poll import Poll
 
 
 class Chat(ChatModel):

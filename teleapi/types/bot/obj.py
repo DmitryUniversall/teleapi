@@ -207,7 +207,7 @@ class TelegramBotObject:
 
         :param chat: `Union[Chat, int]`
             Chat in which you need to install custom title.
-            if `int` - will be fetched using id
+            if `int | str` - will be fetched using id
 
         :return: `MenuButton`
             Returns MenuButton on success.

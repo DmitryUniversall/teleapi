@@ -8,6 +8,7 @@ from teleapi.core.orm.models.generics.fields import (
     RelatedModelField,
 )
 from .chat_type import ChatType
+from ..chat_photo import ChatPhoto
 from ..location.sub_objects.chat_location import ChatLocation
 from teleapi.types.chat_permissions import ChatPermissions
 
@@ -45,4 +46,4 @@ class ChatModel(Model):
 
     location = RelatedModelField(ChatLocation, is_required=False)
     permissions = RelatedModelField(ChatPermissions, is_required=False)
-    # photo = RelatedValidator(ChatPhoto)
+    photo = RelatedModelField(ChatPhoto, is_required=False)
