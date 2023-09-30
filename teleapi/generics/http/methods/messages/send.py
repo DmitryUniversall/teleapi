@@ -5,7 +5,7 @@ from typing import Union
 
 from aiohttp import FormData
 
-from teleapi.core.exceptions.generics import FileTooLargeError
+from teleapi.core.exceptions.generics import FileTooLargeError, InvalidParameterError
 from teleapi.core.http.request.api_method import APIMethod
 from teleapi.core.http.request.api_request import method_request
 from teleapi.core.utils.collections import clear_none_values, exclude_from_dict
@@ -21,7 +21,6 @@ from teleapi.types.input_media.sub_objects.photo import InputMediaPhoto
 from teleapi.types.input_media.sub_objects.video import InputMediaVideo
 from teleapi.types.location import Location, LocationSerializer
 from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
-from teleapi.types.poll.sub_object import PollType
 from .utils import get_converted_reply_markup
 
 if TYPE_CHECKING:
@@ -31,6 +30,7 @@ if TYPE_CHECKING:
     from teleapi.types.forece_reply import ForceReply
     from teleapi.types.inline_keyboard_markup import InlineKeyboardMarkup
     from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
+    from teleapi.types.poll.sub_object import PollType
 
 
 async def send(method: APIMethod,  # TODO: Thumbnail attach with filename attach://<file_attach_name>
@@ -205,7 +205,8 @@ async def send_photo(photo: Union[bytes, str],
 
         if (len(photo) // 1024) // 1024 > 10:
             raise FileTooLargeError(
-                f"Specified photo must be less than 10MB in size, got {(len(photo) // 1024) // 1024}kB")
+                f"Specified photo must be less than 10MB in size, got {(len(photo) // 1024) // 1024}kB"
+            )
 
     parse_mode = parse_mode.value
     caption_entities = MessageEntitySerializer().serialize(
@@ -668,7 +669,7 @@ async def send_video_note(video_note: Union[bytes, str],
 async def send_poll(question: str,  # TODO: Errors (options length, ...)
                     options: List[str],
                     is_anonymous: bool = True,
-                    type_: PollType = None,
+                    type_: 'PollType' = None,
                     allows_multiple_answers: bool = None,
                     correct_option_id: int = None,
                     explanation: str = None,
@@ -731,9 +732,10 @@ async def send_poll(question: str,  # TODO: Errors (options length, ...)
     :raises:
         :raise ValueError: If poll type is quiz and correct_option_id was not specified
     """
+    from teleapi.types.poll.sub_object import PollType
 
     if type_ == PollType.QUIZ and correct_option_id is None:
-        raise ValueError
+        raise ValueError("Poll type is quiz and correct_option_id was not specified")
 
     explanation_parse_mode = explanation_parse_mode.value
     explanation_entities = MessageEntitySerializer().serialize(
@@ -817,13 +819,13 @@ async def send_media_group(media: List[Union[InputMediaAudio, InputMediaDocument
         The sent messages objects.
 
     :raises:
-        :raise ValueError: If the length of provided media is less than 2 or gather than 10
+        :raise InvalidParameterError: If the length of provided media is less than 2 or gather than 10
         :raise ValueError: If media object has 'data' or 'thumbnail_data', but has no 'filename' or 'thumbnail_filename'
         :raise TypeError: If type grouping rules violated
     """
 
     if not (2 <= len(media) <= 10):
-        raise ValueError(f"The length of provided media must be gather or equal 2 and less or equal 10")
+        raise InvalidParameterError(f"The length of provided media must be from 2 to 10")
 
     form_data = FormData()
     request_data = exclude_from_dict(locals(), 'kwargs', 'media')
@@ -884,4 +886,34 @@ async def send_location(location: Location, **kwargs) -> 'Message':
         method=APIMethod.SEND_DICE,
         **location_data,
         **kwargs,
+    )
+
+
+async def send_sticker(sticker: Union[str, bytes], emoji: str = None, **kwargs) -> 'Message':
+    """
+    Sends static .WEBP, animated .TGS, or video .WEBM stickers.
+
+    :param sticker: `Union[str, bytes]`
+        Sticker object to be sent
+
+    :param emoji: `str`
+        Emoji associated with the sticker; only for just uploaded stickers
+
+    :param kwargs: `dict`
+        Other parameters specified in `send` function above
+
+    :return: `Message`
+        The sent message object.
+    """
+
+    if isinstance(sticker, str) and os.path.exists(sticker):
+        _, sticker = get_file(sticker)
+
+    form_data = FormData()
+    form_data.add_field('sticker', sticker)
+
+    return await send(
+        method=APIMethod.SEND_STICKER,
+        **exclude_from_dict(locals(), 'kwargs', 'sticker'),
+        **kwargs
     )

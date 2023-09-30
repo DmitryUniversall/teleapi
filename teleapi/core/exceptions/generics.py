@@ -5,5 +5,9 @@ class FileTooLargeError(TeleapiError):
     pass
 
 
-class ParameterConflict(TeleapiError):
+class ParameterConflictError(TeleapiError):
+    pass
+
+
+class InvalidParameterError(TeleapiError):
     pass

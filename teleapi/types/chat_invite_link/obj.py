@@ -38,12 +38,6 @@ class ChatInviteLink(ChatInviteLinkModel):
 
         :return: `ChatInviteLink`
             Edited invite link
-
-        :raises:
-            :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
-            :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
-            :raise ValidationError: If the provided data model contains incorrect data or serialization failed
-            :raise ValueError: If the provided name is more than 30 characters long
         """
 
         return await edit_invite_link(

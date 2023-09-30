@@ -4,4 +4,4 @@ from .base_types import IntegerSerializerField, StringSerializerField, BooleanSe
 from .selection import SelectionSerializerField
 from .enum_ import EnumSerializerField
 from .input_file import InputFileSerializerField
-
+from .void import VoidSerializerField

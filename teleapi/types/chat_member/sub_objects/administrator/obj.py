@@ -21,9 +21,6 @@ class ChatAdministrator(ChatAdministratorModel, ChatAdministratorRights, ChatMem
 
         :return: `bool`
             Returns True on success
-
-        :raises:
-            :raise ValueError: if custom_title is longer than 16 characters
         """
 
         if not isinstance(chat, Chat):

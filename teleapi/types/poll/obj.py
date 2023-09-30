@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class Poll(PollModel):
     async def stop(self,
                    chat: Union[int, str, Chat],
-                   message: Union[Message, int],
+                   message: Union['Message', int],
                    reply_markup: Union[
                        'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict] = None,
                    view: 'BaseInlineView' = None) -> 'Poll':

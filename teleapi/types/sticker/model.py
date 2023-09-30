@@ -4,6 +4,7 @@ from teleapi.types.filelike import FilelikeModel
 from .sub_objects.sticker_type import StickerType
 from teleapi.types.photo_size import PhotoSize
 from teleapi.types.file import File
+from teleapi.types.mask_position import MaskPosition
 
 
 class StickerModel(FilelikeModel):
@@ -18,4 +19,4 @@ class StickerModel(FilelikeModel):
     custom_emoji_id: Optional[str] = StringModelField(is_required=False)
     thumbnail: PhotoSize = RelatedModelField(PhotoSize, is_required=False)
     premium_animation: Optional[File] = RelatedModelField(File, is_required=False)
-    # mask_position: Optional[MaskPosition] = RelatedModelField(MaskPosition, is_required=False)
+    mask_position: Optional[MaskPosition] = RelatedModelField(MaskPosition, is_required=False)

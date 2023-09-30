@@ -16,7 +16,6 @@ from teleapi.types.input_media.sub_objects.photo import InputMediaPhoto
 from teleapi.types.input_media.sub_objects.video import InputMediaVideo
 from teleapi.types.location import LocationSerializer, Location
 from teleapi.types.message_entity import MessageEntity, MessageEntitySerializer
-from teleapi.types.poll import Poll, PollSerializer
 from teleapi.types.reply_keyboard_markup import ReplyKeyboardMarkup
 from .utils import get_converted_reply_markup
 from ..utils import make_form_data
@@ -25,6 +24,7 @@ if TYPE_CHECKING:
     from teleapi.types.message import Message
     from teleapi.types.reply_keyboard_markup.sub_objects.keyboard_remove import ReplyKeyboardRemove
     from teleapi.core.ui.inline_view.view import BaseInlineView
+    from teleapi.types.poll import Poll
 
 
 async def edit_message(method: APIMethod,
@@ -310,7 +310,7 @@ async def stop_poll(chat_id: Union[int, str],
                     reply_markup: Union[
                         'InlineKeyboardMarkup', 'ReplyKeyboardMarkup', 'ReplyKeyboardRemove', 'ForceReply', dict],
                     view: 'BaseInlineView'
-                    ) -> Poll:
+                    ) -> 'Poll':
     """
     Stops a poll which was sent by the bot
 
@@ -344,6 +344,7 @@ async def stop_poll(chat_id: Union[int, str],
         **kwargs
     }))
 
-    response, data = await method_request("POST", APIMethod.STOP_POLL, data=request_data)
+    from teleapi.types.poll import PollSerializer
 
+    response, data = await method_request("POST", APIMethod.STOP_POLL, data=request_data)
     return PollSerializer().serialize(data=data)

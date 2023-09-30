@@ -24,10 +24,10 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..location import Location
 from ..menu_button import MenuButton, MenuButtonSerializer
 from ..message_entity import MessageEntity
-from ...core.exceptions.generics import ParameterConflict
-from ...core.utils.files import get_file
-from ...generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
-from ...generics.http.methods.messages import *
+from teleapi.core.exceptions.generics import ParameterConflictError, InvalidParameterError
+from teleapi.core.utils.files import get_file
+from teleapi.generics.http.methods.chat import edit_invite_link, revoke_chat_invite_link
+from teleapi.generics.http.methods.messages import *
 
 if TYPE_CHECKING:
     from teleapi.types.message.obj import Message
@@ -254,11 +254,11 @@ class Chat(ChatModel):
             Returns True on success
 
         :raises:
-            :raise ValueError: if custom_title is longer than 16 characters
+            :raise InvalidParameterError: if custom_title is longer than 16 characters
         """
 
         if len(custom_title) > 16:
-            raise ValueError("New custom title for the administrator must be less than 16 characters long")
+            raise InvalidParameterError("New custom title for the administrator must be <= 16 characters long")
 
         response, data = await method_request("post", APIMethod.SET_CHAT_ADMIN_CUSTOM_TITLE, data={
             'chat_id': self.id,
@@ -365,13 +365,14 @@ class Chat(ChatModel):
 
         :raises:
             :raise BadChatType: If chat is not forum
+            :raise InvalidParameterError: If topic name is more than 128 characters long
         """
 
         if not self.is_forum:
             raise BadChatType(f"Chat {self.id} must be forum to use this method")
 
         if len(name) > 128:
-            raise ValueError("Topic name must be less than 128 characters long")
+            raise InvalidParameterError("Topic name must be <= 128 characters long")
 
         icon_color = icon_color.value
 
@@ -405,13 +406,17 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
+            :raise InvalidParameterError: If topic name is more than 128 characters long
         """
 
         if not self.is_forum:
             raise BadChatType(f"Chat {self.id} must be forum to use this method")
 
         if len(name) > 128:
-            raise ValueError("Topic name must be less than 128 characters long")
+            raise InvalidParameterError("Topic name must be <= 128 characters long")
 
         response, data = await method_request("post", APIMethod.EDIT_FORUM_TOPIC, data={
             'chat_id': self.id,
@@ -431,6 +436,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -454,6 +462,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -477,6 +488,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -500,6 +514,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -523,13 +540,17 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
+            :raise InvalidParameterError: If topic name is more than 128 characters long
         """
 
         if not self.is_forum:
             raise BadChatType(f"Chat {self.id} must be forum to use this method")
 
         if len(name) > 128:
-            raise ValueError("Topic name must be less than 128 characters long")
+            raise InvalidParameterError("Topic name must be <= 128 characters long")
 
         response, data = await method_request("post", APIMethod.EDIT_GENERAL_FORUM_TOPIC, data={
             'chat_id': self.id,
@@ -546,6 +567,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -567,6 +591,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -588,6 +615,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -608,6 +638,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -628,6 +661,9 @@ class Chat(ChatModel):
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise BadChatType: If chat is not forum
         """
 
         if not self.is_forum:
@@ -690,13 +726,13 @@ class Chat(ChatModel):
             New invite link
 
         :raises:
-            :raise ValueError: If the provided name is more than 30 characters long
+            :raise InvalidParameterError: If the provided name is more than 30 characters long
         """
 
         if len(name) > 30:
-            raise ValueError("Link name must be less than 30 characters long")
+            raise InvalidParameterError("Link name must be <= 30 characters long")
         elif member_limit is not None and creates_join_request:
-            raise ParameterConflict("Member limit can't be specified for links requiring administrator approval")
+            raise ParameterConflictError("Member limit can't be specified for links requiring administrator approval")
 
         response, data = await method_request("post", APIMethod.CREATE_CHAT_INVITE_LINK, data=clear_none_values({
             'chat_id': self.id,
@@ -737,9 +773,6 @@ class Chat(ChatModel):
 
         :return: `ChatInviteLink`
             Edited invite link
-
-        :raises:
-            :raise ValueError: If the provided name is more than 30 characters long
         """
 
         return await edit_invite_link(
@@ -861,13 +894,11 @@ class Chat(ChatModel):
             Returns True on success
 
         :raises:
-            :raise ValueError: If the provided title is less than 1 or more than 128 characters long
+            :raise InvalidParameterError: If the provided title is less than 1 or more than 128 characters long
         """
 
-        if len(title) > 128:
-            raise ValueError("Chat title must be less than 128 characters long")
-        if len(title) == 0:
-            raise ValueError("At least 1 character must be in chat title")
+        if not (1 <= len(title) <= 128):
+            raise InvalidParameterError("Chat title must be 1 <= len(title) <= 128 characters long")
 
         response, data = await method_request("post", APIMethod.SET_CHAT_TITLE, data={
             'chat_id', self.id
@@ -887,11 +918,11 @@ class Chat(ChatModel):
             Returns True on success
 
         :raises:
-            :raise ValueError: If the provided description is more than 255 characters long
+            :raise InvalidParameterError: If the provided description is more than 255 characters long
         """
 
         if len(description) > 255:
-            raise ValueError("Chat description must be less than 255 characters long")
+            raise InvalidParameterError("Chat description must be <= 255 characters long")
 
         response, data = await method_request("post", APIMethod.SET_CHAT_DESCRIPTION, data={
             'chat_id', self.id
@@ -1236,7 +1267,7 @@ class Chat(ChatModel):
                         question: str,
                         options: List[str] = None,
                         is_anonymous: bool = None,
-                        type_: PollType = None,
+                        type_: 'PollType' = None,
                         allows_multiple_answers: bool = None,
                         correct_option_id: int = None,
                         explanation: str = None,

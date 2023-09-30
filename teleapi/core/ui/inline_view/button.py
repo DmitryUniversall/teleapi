@@ -22,7 +22,7 @@ class BaseInlineViewButton(InlineKeyboardButton):
         self.place = default(place, getattr(self.__class__.Meta, "place", -1))
 
         if self.row is None:
-            raise ValueError(f"Unable to get '{self}' button row")
+            raise AttributeError(f"Unable to get '{self}' button row")
 
         meta_kwargs = {}
         for field in self.__class__.__fields__:

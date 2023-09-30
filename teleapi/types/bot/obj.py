@@ -1,5 +1,6 @@
 from typing import List, Union
 
+from teleapi.core.exceptions.generics import InvalidParameterError
 from teleapi.core.http.request import method_request, APIMethod
 from teleapi.types.bot_command import TelegramBotCommand, TelegramBotCommandSerializer
 from teleapi.types.bot.bot_description import BotDescription, BotDescriptionSerializer
@@ -96,11 +97,11 @@ class TelegramBotObject:
             Returns True on success
 
         :raises:
-            :raise ValueError: if specified name is more than 64 characters long
+            :raise InvalidParameterError: if specified name is more than 64 characters long
         """
 
         if len(name) > 64:
-            raise ValueError("Bots name must be less than 64 characters long")
+            raise InvalidParameterError("Bots name must be <= 64 characters long")
 
         response, data = await method_request("get", APIMethod.SET_MY_NAME, data={
             'name': name,
@@ -124,11 +125,11 @@ class TelegramBotObject:
             Returns True on success
 
         :raises:
-            :raise ValueError: if specified description is more than 512 characters long
+            :raise InvalidParameterError: if specified description is more than 512 characters long
         """
 
         if len(description) > 512:
-            raise ValueError("Bots description must be less than 512 characters long")
+            raise InvalidParameterError("Bots description must be <= 512 characters long")
 
         response, data = await method_request("get", APIMethod.SET_MY_DESCRIPTION, data={
             'description': description,
@@ -170,10 +171,13 @@ class TelegramBotObject:
 
         :return: `bool`
             Returns True on success
+
+        :raises:
+            :raise InvalidParameterError: if bots short description is more than 120 characters long
         """
 
         if len(short_description) > 120:
-            raise ValueError("Bots short description must be less than 120 characters long")
+            raise InvalidParameterError("Bots short description must be <= 120 characters long")
 
         response, data = await method_request("post", APIMethod.SET_MY_SHORT_DESCRIPTION, data={
             'short_description': short_description,

@@ -1,5 +1,6 @@
 from typing import Union, TYPE_CHECKING
 from datetime import datetime
+from teleapi.core.exceptions.generics import InvalidParameterError
 from teleapi.core.http.request import method_request, APIMethod
 
 if TYPE_CHECKING:
@@ -43,13 +44,13 @@ async def edit_invite_link(chat_id: Union[int, str],
         :raise ApiRequestError: or any of its subclasses if the request sent to the Telegram Bot API fails.
         :raise aiohttp.ClientError: If there's an issue with the HTTP request itself.
         :raise ValidationError: If the provided data model contains incorrect data or serialization failed
-        :raise ValueError: If the provided name is more than 30 characters long
+        :raise InvalidParameterError: If the provided name is more than 30 characters long
     """
 
     from teleapi.types.chat_invite_link import ChatInviteLinkSerializer
 
     if len(name) > 30:
-        raise ValueError("Link name must be less than 30 characters long")
+        raise InvalidParameterError("Link name must be <= 30 characters long")
 
     expire_date = expire_date.timestamp() if expire_date is not None else None
 

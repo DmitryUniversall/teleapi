@@ -15,6 +15,7 @@ from ..input_media.sub_objects.video import InputMediaVideo
 from ..location import Location
 from ..poll.sub_object import PollType
 from ..poll import Poll
+from ...core.exceptions.generics import InvalidParameterError
 from ...core.utils.collections import exclude_from_dict
 from ...core.utils.syntax import default
 
@@ -495,7 +496,7 @@ class Message(MessageModel):
 
         :raises:
             :raise MessageTooOld: if message is too old to be deleted (see Notes)
-            :rise ValueError: if delete_after is longer than 48 hours (A message can only be deleted if it was sent less than 48 hours ago)
+            :rise InvalidParameterError: if delete_after is longer than 48 hours (A message can only be deleted if it was sent less than 48 hours ago)
 
         Notes:
          - A message can only be deleted if it was sent less than 48 hours ago.
@@ -509,7 +510,7 @@ class Message(MessageModel):
         """
 
         if delete_after is not None and delete_after > timedelta(hours=48).total_seconds():
-            raise ValueError("Message can not be deleted after 48 hours")
+            raise InvalidParameterError("Message can not be deleted after 48 hours")
 
         if delete_after:
             await asyncio.sleep(delete_after)
