@@ -5,7 +5,7 @@ from .exceptions import ValidationError
 
 
 class BaseValidator(Validateable, ABC):
-    def __init__(self, is_required: bool = True, default: Any = None, validate: Callable[['BaseValidator', Any], Optional[str]] = None) -> None:
+    def __init__(self, is_required: bool = True, default: Any = None, validate: Callable[['BaseValidator', Any], bool] = None) -> None:
         self.is_required = is_required
         self.default = default
         self.additional_validator = validate
@@ -20,9 +20,9 @@ class BaseValidator(Validateable, ABC):
                 f"Value of Validator {self} is missed"
             )
 
-        if self.additional_validator is not None and (msg := self.additional_validator(self, value)) is not None:
+        if self.additional_validator is not None and not self.additional_validator(self, value):
             raise ValidationError(
-                f"Additional validation failed for {self} (value: {value}): {msg}"
+                f"Additional validation failed for {self}"
             )
 
         return value

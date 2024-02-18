@@ -204,7 +204,6 @@ class MessageModel(Model):
     location: Optional[Location] = RelatedModelField(Location, is_required=False)
     venue: Optional[Venue] = RelatedModelField(Venue, is_required=False)
     story: Optional[Story] = RelatedModelField(Story, is_required=False)
-
     # sticker: Optional[sticker] = RelatedModelField(sticker, is_required=False)
     # game: Optional[Game] = RelatedModelField(Game, is_required=False)
     # web_app_data: Optional[WebAppData] = RelatedModelField(WebAppData, is_required=False)

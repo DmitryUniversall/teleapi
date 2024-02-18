@@ -2,8 +2,7 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Type, TYPE_CHECKING
 from teleapi.types.update import Update
-from functools import wraps
-from ...utils.syntax import default
+from teleapi.core.utils.syntax import default
 
 if TYPE_CHECKING:
     from .manager import BaseErrorManager

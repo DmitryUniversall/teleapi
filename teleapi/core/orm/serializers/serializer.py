@@ -45,7 +45,7 @@ class Serializer(BaseSerializer, ABC):
     def convert_to_objects(self, data: JsonValue) -> Dict[str, JsonValue]:
         result = {}
 
-        for field in filter(lambda x: not x.write_only, self.__class__.__fields__):
+        for field in filter(lambda x: not x.read_only, self.__class__.__fields__):
             value = data.get(field.read_name, None)
             validated = field.validate(value)
 
