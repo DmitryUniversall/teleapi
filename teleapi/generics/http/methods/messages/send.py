@@ -200,7 +200,7 @@ async def send_photo(photo: Union[bytes, str],
         :raise FileTooLargeError: If specified photo is more than 10MB in size
     """
 
-    if isinstance(photo, str) and os.path.exists(photo):
+    if isinstance(photo, str):  # FIXME
         filename, photo = get_file(photo)
 
         if (len(photo) // 1024) // 1024 > 10:

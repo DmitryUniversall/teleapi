@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 
 from teleapi.core.http.request import method_request
@@ -6,6 +7,9 @@ from teleapi.types.update.obj import Update
 from teleapi.types.update.serializer import UpdateSerializer
 from teleapi.core.http.request import APIMethod
 from teleapi.core.utils.collections import clear_none_values
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class LongPollingUpdater(BaseUpdater):
@@ -51,13 +55,26 @@ class LongPollingUpdater(BaseUpdater):
             "allowed_updates": [upd.value for upd in self.allowed_updates] if self.allowed_updates else None
         })
 
-        response, data = await method_request('GET', APIMethod.GET_UPDATES, params=params)
+        while True:
+            attempt = 0
 
-        if len(data['result']) == 0:
-            return []
+            try:
+                response, data = await method_request('GET', APIMethod.GET_UPDATES, params=params)
 
-        updates = UpdateSerializer().serialize(data=data['result'], many=True)
+                if len(data['result']) == 0:
+                    return []
 
-        self.offset = updates[-1].id + 1
+                updates = UpdateSerializer().serialize(data=data['result'], many=True)
 
-        return updates
+                self.offset = updates[-1].id + 1
+                return updates
+            except Exception as error:
+                _logger.debug(f"Unknown error while fetching updates (attempt {attempt}): {error.__class__.__name__}: {str(error)}")
+                await asyncio.sleep(2)
+                attempt += 1
+
+                if attempt > 5:
+                    _logger.critical(f"CRITICAL ERROR: {error.__class__.__name__}: {str(error)}")
+                    raise error
+
+                continue

@@ -17,12 +17,7 @@ class AsyncApiRequest(ABC):
     https://core.telegram.org/bots/api#making-requests
 
     An abstract base class for making asynchronous requests to the Telegram HTTP API.
-
-    Attributes:
-        API_TOKEN (str): The API token used for authentication, retrieved from project settings by default.
     """
-
-    API_TOKEN: str = project_settings.get('API_TOKEN')
 
     def __init__(self, http_method: str, token: str = None) -> None:
         """
@@ -37,7 +32,7 @@ class AsyncApiRequest(ABC):
             :raise ValueError: If the API token is not specified during initialization.
         """
 
-        self.token = default(token, self.__class__.API_TOKEN)
+        self.token = default(token, project_settings.get('API_TOKEN'))
 
         if self.token is None:
             raise ValueError("Token was not specified")

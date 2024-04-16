@@ -26,6 +26,7 @@ from teleapi.types.message.sub_objects.message_id import MessageId
 from .photo_size import PhotoSize
 from .poll import Poll
 from .reply_keyboard_markup import ReplyKeyboardMarkup
+from .reply_keyboard_markup.sub_objects import *
 from .update import Update
 from .user import User
 from .video import Video

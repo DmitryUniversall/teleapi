@@ -44,6 +44,10 @@ class BaseBot(TelegramBotObject, ABC):
         """
 
         self._is_initialized = False
+        self.me = None
+        self.error_manager = default(error_manager, ErrorManager())
+        project_settings.BOT = self
+
         self._updater = updater_cls(bot=self, allowed_updates=allowed_updates)
 
         self.__middlewares: List[BaseMiddleware] = [
@@ -52,10 +56,6 @@ class BaseBot(TelegramBotObject, ABC):
         self._executors: List[BaseExecutor] = [
             executor_cls(self) for executor_cls in (project_settings.get('EXECUTORS', []) + self.__class__.__bot_executors__)
         ]
-
-        self.me = None
-        self.error_manager = default(error_manager, ErrorManager())
-        project_settings.BOT = self
 
     @abstractmethod
     async def dispatch(self, update: Update) -> None:
